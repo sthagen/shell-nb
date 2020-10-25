@@ -53,7 +53,7 @@ but `nb` works great without them.
 - convenient filtering and listing,
 - [Internet Archive Wayback Machine](https://archive.org/web/) snapshot lookup for
   broken links,
-- and easy viewing of bookmarked pages in the terminal and your regular web browser.
+- easy viewing of bookmarked pages in the terminal and your regular web browser.
 
 Page information is automatically downloaded, compiled, and saved into normal Markdown
 documents made for humans, so bookmarks are easy to edit just like any other note.
@@ -161,9 +161,13 @@ Also supported for various enhancements:
 [Midnight Commander](https://en.wikipedia.org/wiki/Midnight_Commander),
 [`mpg123`](https://en.wikipedia.org/wiki/Mpg123),
 [MPlayer](https://en.wikipedia.org/wiki/MPlayer),
+[note-link-janitor](https://github.com/andymatuschak/note-link-janitor)
+(via [plugin](https://github.com/xwmx/nb/blob/master/plugins/backlink.nb-plugin)),
 [`pdftotext`](https://en.wikipedia.org/wiki/Pdftotext),
 [Pygments](https://pygments.org/),
-[Ranger](https://ranger.github.io/)
+[Ranger](https://ranger.github.io/),
+[readability-cli](https://gitlab.com/gardenappl/readability-cli),
+[`termpdf.py`](https://github.com/dsanson/termpdf.py)
 
 #### macOS / Homebrew
 
@@ -187,11 +191,13 @@ To install with [npm](https://www.npmjs.com/package/nb.sh):
 npm install -g nb.sh
 ```
 
-Installing `nb` through `npm` also installs completion scripts for Bash and
-Zsh. On Ubuntu and WSL, you can run [`sudo nb env install`](#env) to install
+After `npm` installation completes, run `sudo nb completions install` to
+install Bash and Zsh completion scripts (recommended).
+
+On Ubuntu and WSL, you can run [`sudo nb env install`](#env) to install
 the optional dependencies.
 
-*Note: `nb` is also available under its original package name,
+*`nb` is also available under its original package name,
 [notes.sh](https://www.npmjs.com/package/notes.sh),
 which comes with an extra `notes` executable wrapping `nb`.*
 
@@ -204,16 +210,16 @@ commands:
 # install using wget
 sudo wget https://raw.github.com/xwmx/nb/master/nb -O /usr/local/bin/nb &&
   sudo chmod +x /usr/local/bin/nb &&
-  sudo nb env install
+  sudo nb completions install
 
 # install using curl
 sudo curl -L https://raw.github.com/xwmx/nb/master/nb -o /usr/local/bin/nb &&
   sudo chmod +x /usr/local/bin/nb &&
-  sudo nb env install
+  sudo nb completions install
 ```
 
-This will also install the completion scripts on all systems and the
-recommended dependencies on Ubuntu and WSL.
+On Ubuntu and WSL, you can run [`sudo nb env install`](#env) to install
+the optional dependencies.
 
 ###### User-only Installation
 
@@ -422,6 +428,20 @@ nb add example.org
 nb add --type rst
 ```
 
+Notes can be tagged simply by adding hashtags anywhere in the document:
+
+```text
+#tag1 #tag2
+```
+
+Search for tagged notes and bookmarks with [`nb search` / `nb q`](#search):
+
+```bash
+nb search "#tag1"
+
+nb q "#tag2"
+```
+
 For a full list of options available for `nb add`, run [`nb help add`](#add).
 
 ##### Password-Protected Encrypted Notes and Bookmarks
@@ -556,6 +576,22 @@ filenames and titles:
 
 ```bash
 > nb ls "^example.*"
+[3] Example Title
+```
+
+Multiple words act like an `OR` filter, listing any titles or filenames that
+match any of the words:
+
+```bash
+> nb ls example ideas
+[3] Example Title
+[1] Ideas
+```
+
+When multiple words are quoted, filter titles and filenames for that phrase:
+
+```bash
+> nb ls "example title"
 [3] Example Title
 ```
 
@@ -902,7 +938,7 @@ n                 Jump to next <query> match
 q                 Quit
 ```
 
-*Note: If `less` scrolling isn't working in [iTerm2](https://www.iterm2.com/),
+*If `less` scrolling isn't working in [iTerm2](https://www.iterm2.com/),
 go to* "Settings" -> "Advanced" -> "Scroll wheel sends arrow keys when in
 alternate screen mode" *and change it to* "Yes".
 *[More info](https://stackoverflow.com/a/37610820)*
@@ -920,6 +956,8 @@ depending on the tools available in the environment. Supported file types and
 tools include:
 
 - PDF files:
+  - [`termpdf.py`](https://github.com/dsanson/termpdf.py)
+    with [kitty](https://sw.kovidgoyal.net/kitty/)
   - [`pdftotext`](https://en.wikipedia.org/wiki/Pdftotext)
 - Audio files:
   - [`mplayer`](https://en.wikipedia.org/wiki/MPlayer)
@@ -927,8 +965,10 @@ tools include:
   - [`mpg123`](https://en.wikipedia.org/wiki/Mpg123)
   - [`ffplay`](https://ffmpeg.org/ffplay.html)
 - Images:
-  - [ImageMagick](https://imagemagick.org/)
-  - [`imgcat`](https://www.iterm2.com/documentation-images.html)
+  - [ImageMagick](https://imagemagick.org/) with a terminal that
+    supports [sixels](https://en.wikipedia.org/wiki/Sixel)
+  - [`imgcat`](https://www.iterm2.com/documentation-images.html) with
+    [iTerm2](https://www.iterm2.com/)
   - [kitty's `icat` kitten](https://sw.kovidgoyal.net/kitty/kittens/icat.html)
 - Folders / Directories:
   - [`ranger`](https://ranger.github.io/)
@@ -936,7 +976,9 @@ tools include:
 - Word Documents:
   - [Pandoc](https://pandoc.org/)
 - EPUB ebooks:
-  - [Pandoc](https://pandoc.org/) and [`w3m`](https://en.wikipedia.org/wiki/W3m)
+  - [Pandoc](https://pandoc.org/) with
+    [`w3m`](https://en.wikipedia.org/wiki/W3m) or
+    [`lynx`](https://en.wikipedia.org/wiki/Lynx_(web_browser))
 
 When using `nb show` with other file types or if the above tools are not
 available, `nb show` will open files in your system's preferred application
@@ -1105,8 +1147,10 @@ permission.
 ```
 
 `nb` embeds the page content in the bookmark, making it available for full
-text search with [`nb search`](#search). When `pandoc` is installed, the
-HTML page content will be converted to Markdown.
+text search with [`nb search`](#search). When [Pandoc](https://pandoc.org/)
+is installed, the HTML page content will be converted to Markdown. When
+[readability-cli](https://gitlab.com/gardenappl/readability-cli) is
+installed, markup is cleaned up to focus on content.
 
 In addition to caching the page content, you can also include a quote from
 the page using the `-q` / `--quote` option:
@@ -1216,7 +1260,7 @@ nb q "#tag"
 
 ```bash
 > nb q "example query"
-[10] example.bookmark.md "Example Bookmark (example.com)"
+[10] 🔖 example.bookmark.md "Example Bookmark (example.com)"
 ---------------------------------------------------------
 5:Lorem ipsum example query.
 ```
@@ -1355,6 +1399,27 @@ nb example:peek 12
 If the page has been removed, `nb` can check the [Internet Archive
 Wayback Machine](https://archive.org/web/) for an archived copy.
 
+The preferred terminal web browser can be set using the `$BROWSER`
+environment variable, assigned in `~/.bashrc`, `~/.zshrc`, or similar:
+
+```bash
+export BROWSER=lynx
+```
+
+When `$BROWSER` is not set, `nb` looks for `w3m` and `lynx` and uses the
+first one it finds.
+
+`$BROWSER` can also be used to easy specify the terminal browser for an
+individual command:
+
+```bash
+> BROWSER=lynx nb 12 peek
+# opens the URL from bookmark 12 in lynx
+
+> BROWSER=w3m nb 12 peek
+# opens the URL from bookmark 12 in w3m
+```
+
 `nb show` and `nb edit` can also be used to view and edit bookmark files,
 which include the cached page converted to Markdown.
 
@@ -1413,7 +1478,7 @@ Bookmark a page:
 
 ```bash
 > bookmark https://example.com --tags tag1,tag2
-Added: [3] 20200101000000.bookmark.md "Example Title (example.com)"
+Added: [3] 🔖 20200101000000.bookmark.md "Example Title (example.com)"
 ```
 List and filter bookmarks with `bookmark` and `bookmark list`:
 
@@ -1445,7 +1510,7 @@ Perform a full text search of bookmarks and archived page content:
 
 ```bash
 > bookmark search "example query"
-[10] example.bookmark.md "Example Bookmark (example.com)"
+[10] 🔖 example.bookmark.md "Example Bookmark (example.com)"
 ---------------------------------------------------------
 5:Lorem ipsum example query.
 ```
@@ -1498,7 +1563,7 @@ highlighting:
 
 ```bash
 > nb search "example"
-[314]  example.bookmark.md "Example Bookmark (example.com)"
+[314]  🔖 example.bookmark.md "Example Bookmark (example.com)"
 ----------------------------------------------------------
 1:# Example Bookmark (example.com)
 
@@ -1514,7 +1579,7 @@ the `-l` or `--list` option:
 
 ```bash
 > nb search "example" --list
-[314]  example.bookmark.md "Example Bookmark (example.com)"
+[314]  🔖 example.bookmark.md "Example Bookmark (example.com)"
 [2718] example.md "Example Note"
 ```
 
@@ -2003,9 +2068,47 @@ nb remote remove
 nb example:remote remove
 ```
 
-You can also turn off autosync with
-[`nb set auto_sync`](#auto_sync) and sync manually with
-[`nb sync`](#sync).
+Automatic git syncing can be turned on or off with
+[`nb set auto_sync`](#auto_sync).
+
+To sync manually, use [`nb sync`](#sync):
+
+```bash
+# manually sync the current notebook
+nb sync
+
+# manually sync the notebook named "example"
+nb example:sync
+```
+
+To bypass `nb` syncing and run `git` commands directly within a
+notebook, use [`nb git`](#git):
+
+```bash
+# run `git fetch` in the current notebook
+nb git fetch origin
+
+# run `git status` in the notebook named "example"
+nb example:git status
+```
+
+#### Private Repositories and Git Credentials
+
+Syncing with private repositories requires configuring git to not prompt
+for credentials. For repositories cloned over HTTPS,
+[credentials can be cached with git
+](https://docs.github.com/en/free-pro-team@latest/github/using-git/caching-your-github-credentials-in-git).
+For repositories cloned over SSH,
+[keys can be added to the ssh-agent
+](https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent).
+
+Use [`nb sync`](#sync) within a notebook to determine whether your
+configuration is working. If `nb sync` displays a password prompt,
+then follow the instructions above to configure your credentials.
+The password prompt can be used to authenticate, but `nb` does not
+cache or otherwise handle git credentials in any way, so there will
+likely be multiple password prompts during each sync if credentials
+are not configured.
 
 #### Sync Conflict Resolution
 
@@ -2085,6 +2188,19 @@ nb import ~/Documents/example.docx
 nb open example.docx
 ```
 
+Multiple filenames and globbing are supported:
+
+```bash
+# import all files and directories in the current directory
+nb import ./*
+
+# import all markdown files in the current directory
+nb import ./*.md
+
+# import example.md and sample.md in the current directory
+nb import example.md sample.md
+```
+
 `nb import` can also download and import files directly from the web:
 
 ```bash
@@ -2112,7 +2228,8 @@ home
 ```
 
 Notes, bookmarks, and other files can be exported using [`nb export`](#export).
-If Pandoc is installed, notes can be automatically converted to any of the
+If [Pandoc](https://pandoc.org/) is installed, notes can be automatically
+converted to any of the
 [formats supported by Pandoc](https://pandoc.org/MANUAL.html#option--to).
 By default, the output format is determined by the file extension:
 
@@ -2606,7 +2723,7 @@ notebook:
 ```bash
 # _example() continued:
 
-# return the notebook path
+# get the notebook path
 local _notebook_path
 _notebook_path="$(_notebooks current --path)"
 
@@ -2643,10 +2760,10 @@ home
 [1] Demo
 
 nb> edit 3 --content "New content."
-Updated [3] Example
+Updated: [3] Example
 
 nb> bookmark https://example.com
-Added: [4] example.bookmark.md "Example Title (example.com)"
+Added: [4] 🔖 example.bookmark.md "Example Title (example.com)"
 
 nb> ls
 home
@@ -2758,7 +2875,7 @@ Usage:
               [-q | --quote] [-r <url> | --related <url>]... [--save-source]
               [--skip-content] [-t <tag1>,<tag2>... | --tags <tag1>,<tag2>...]
               [--title <title>]
-  nb bookmark [list [<list options>...]]
+  nb bookmark [list [<list-options>...]]
   nb bookmark (open | peek | url) (<id> | <filename> | <path> | <title>)
   nb bookmark (edit | delete) (<id> | <filename> | <path> | <title>)
   nb bookmark search <query>
@@ -2773,12 +2890,12 @@ Usage:
   nb export notebook <name> [<path>]
   nb export pandoc (<id> | <filename> | <path> | <title>)
             [<pandoc options>...]
-  nb git checkpoint [<message>]
-  nb git <git options>...
+  nb git [checkpoint [<message>] | dirty]
+  nb git <git-options>...
   nb help [<subcommand>] [-p | --print]
   nb help [-c | --colors] | [-r | --readme] | [-s | --short] [-p | --print]
   nb history [<id> | <filename> | <path> | <title>]
-  nb import [copy | download | move] (<path> | <url>) [--convert]
+  nb import [copy | download | move] (<path>... | <url>) [--convert]
   nb import notebook <path> [<name>]
   nb init [<remote-url>]
   nb list [-e [<length>] | --excerpt [<length>]] [--filenames]
@@ -2814,8 +2931,8 @@ Usage:
   nb open (<id> | <filename> | <path> | <title> | <notebook>)
   nb peek (<id> | <filename> | <path> | <title> | <notebook>)
   nb plugins [<name>] [--paths]
-  nb plugins install [<path> | <url>]
-  nb plugins uninstall <name>
+  nb plugins install [<path> | <url>] [--force]
+  nb plugins uninstall <name> [--force]
   nb remote [remove | set <url> [-f | --force]]
   nb rename (<id> | <filename> | <path> | <title>) [-f | --force]
             (<name> | --reset | --to-bookmark | --to-note)
@@ -2912,7 +3029,7 @@ Usage:
               [-q | --quote] [-r <url> | --related <url>]... [--save-source]
               [--skip-content] [-t <tag1>,<tag2>... | --tags <tag1>,<tag2>...]
               [--title <title>]
-  bookmark list [<list options>...]
+  bookmark list [<list-options>...]
   bookmark (open | peek | url) (<id> | <filename> | <path> | <title>)
   bookmark (edit | delete) (<id> | <filename> | <path> | <title>)
   bookmark search <query>
@@ -2955,13 +3072,24 @@ Description:
   Create, view, search, edit, and delete bookmarks.
 
   By default, the html page content is saved within the bookmark, making the
-  bookmarked page available for full-text search. When `pandoc` is
+  bookmarked page available for full-text search. When Pandoc [1] is
   installed, the HTML content will be converted to Markdown before saving.
+  When readability-cli [2] is install, markup is cleaned up to focus on
+  content.
+
+  `peek` opens the page in `w3m` [3] or `lynx` [4] when available.
+  To specify a preferred browser, set the `$BROWSER` environment variable
+  in your .bashrc, .zshrc, or equivalent, e.g., `export BROWSER="lynx"`.
 
   Bookmarks are identified by the `.bookmark.md` file extension. The
   bookmark URL is the first URL in the file within "<" and ">" characters:
 
     <https://www.example.com>
+
+    1. https://pandoc.org/
+    2. https://gitlab.com/gardenappl/readability-cli
+    3. https://en.wikipedia.org/wiki/W3m
+    4. https://en.wikipedia.org/wiki/Lynx_(web_browser)
 
 Examples:
   bookmark https://example.com
@@ -3084,7 +3212,7 @@ Usage:
               [-q | --quote] [-r <url> | --related <url>]... [--save-source]
               [--skip-content] [-t <tag1>,<tag2>... | --tags <tag1>,<tag2>...]
               [--title <title>]
-  nb bookmark list [<list options>...]
+  nb bookmark list [<list-options>...]
   nb bookmark (open | peek | url) (<id> | <filename> | <path> | <title>)
   nb bookmark (edit | delete) (<id> | <filename> | <path> | <title>)
   nb bookmark search <query>
@@ -3128,13 +3256,24 @@ Description:
   Create, view, search, edit, and delete bookmarks.
 
   By default, the html page content is saved within the bookmark, making the
-  bookmarked page available for full-text search. When `pandoc` is
+  bookmarked page available for full-text search. When Pandoc [1] is
   installed, the HTML content will be converted to Markdown before saving.
+  When readability-cli [2] is install, markup is cleaned up to focus on
+  content.
+
+  `peek` opens the page in `w3m` [3] or `lynx` [4] when available.
+  To specify a preferred browser, set the `$BROWSER` environment variable
+  in your .bashrc, .zshrc, or equivalent, e.g., `export BROWSER="lynx"`.
 
   Bookmarks are identified by the `.bookmark.md` file extension. The
   bookmark URL is the first URL in the file within "<" and ">" characters:
 
     <https://www.example.com>
+
+    1. https://pandoc.org/
+    2. https://gitlab.com/gardenappl/readability-cli
+    3. https://en.wikipedia.org/wiki/W3m
+    4. https://en.wikipedia.org/wiki/Lynx_(web_browser)
 
 Examples:
   nb https://example.com
@@ -3308,12 +3447,14 @@ Examples:
 
 ```text
 Usage:
-  nb git checkpoint [<message>]
-  nb git <git options>...
+  nb git [checkpoint [<message>] | dirty]
+  nb git <git-options>...
 
 Subcommands:
-  checkpoint  Create a new git commit in the current notebook and sync with
-              the remote if `nb set auto_sync` is enabled.
+  checkpoint    Create a new git commit in the current notebook and sync with
+                the remote if `nb set auto_sync` is enabled.
+  dirty         0 (success, true) if there are uncommitted changes in
+                <notebook-path>. 1 (error, false) if <notebook-path> is clean.
 
 Description:
   Run `git` commands within the current notebook directory.
@@ -3379,20 +3520,20 @@ Examples:
 
 ```text
 Usage:
-  nb import (<path> | <url>)
-  nb import copy <path>
+  nb import (<path>... | <url>)
+  nb import copy <path>...
   nb import download <url> [--convert]
-  nb import move <path>
+  nb import move <path>...
   nb import notebook <path> [<name>]
 
 Options:
   --convert  Convert HTML content to Markdown.
 
 Subcommands:
-  (default) Copy or download the file in <path> or <url>.
-  copy      Copy the file at <path> into the current notebook.
+  (default) Copy or download the file(s) at <path> or <url>.
+  copy      Copy the file(s) at <path> into the current notebook.
   download  Download the file at <url> into the current notebook.
-  move      Copy the file at <path> into the current notebook.
+  move      Move the file(s) at <path> into the current notebook.
   notebook  Import the local notebook at <path> to make it global.
 
 Description:
@@ -3404,6 +3545,8 @@ Examples:
   nb import ~/Documents/example.docx
   nb import https://example.com/example.pdf
   nb example:import https://example.com/example.jpg
+  nb import ./*
+  nb import ./*.md
 ```
 
 #### `init`
@@ -3725,8 +3868,8 @@ Shortcut Alias: `p`
 
 ```text
 Usage:
-  nb plugins [<name>] [--paths]
-  nb plugins install [<path> | <url>]
+  nb plugins [<name>] [--paths] [--force]
+  nb plugins install [<path> | <url>] [--force]
   nb plugins uninstall <name>
 
 Options:
@@ -3972,6 +4115,10 @@ Alias: `set`
 
          nb help --colors
 
+     To change the syntax highlighting theme, use:
+
+         nb set syntax_theme
+
      • Available themes:
 
          blacklight
@@ -4149,7 +4296,7 @@ Example:
   [3] Example
 
   nb> edit 3 --content "New content."
-  Updated [3] Example
+  Updated: [3] Example
 
   nb> notebook
   home
@@ -4175,9 +4322,9 @@ Options:
   --info-line      Print the id, filename, and title of the item.
   --path           Print the full path of the item.
   -p, --print      Print to standard output / terminal.
-  -r, --render     Use `pandoc` [1] to render the file to HTML and display with
-                   `lynx` [2] (if available) or `w3m` [3]. If `pandoc` is
-                   not available, `-r` / `--render` is ignored.
+  -r, --render     Use `pandoc` [1] to render the file to HTML and display
+                   in the terminal web browser. If either `pandoc` or a
+                   browser are unavailable, `-r` / `--render` is ignored.
   --selector-id    Given a selector (e.g., notebook:example.md), print the
                    identifier portion (example.md).
   --title          Print the title of the note.
@@ -4189,11 +4336,11 @@ Options:
   -u, --updated    Print the date and time of the last recorded change.
 
 Description:
-  Show a note or notebook. Notes in text file formats can be rendered or
+  Show an item or notebook. Notes in text file formats can be rendered or
   printed to standard output. Non-text files will be opened in your system's
   preferred app or program for that file type.
 
-  By default, the note will be opened using `less` or the program configured
+  By default, the item will be opened using `less` or the program configured
   in the `$PAGER` environment variable. Use the following keys to navigate
   in `less` (see `man less` for more information):
 
@@ -4212,12 +4359,16 @@ Description:
   To skip the pager and print to standard output, use the `-p` / `--print`
   option.
 
+  `-r` / `--render` automatically uses either `w3m` [2] or `lynx` [3].
+  To specify a preferred browser, set the `$BROWSER` environment variable
+  in your .bashrc, .zshrc, or equivalent, e.g., `export BROWSER="lynx"`.
+
   If `bat` [4], `highlight` [5], or Pygments [6] is installed, notes are
   printed with syntax highlighting.
 
     1. https://pandoc.org/
-    2. https://en.wikipedia.org/wiki/Lynx_(web_browser)
-    3. https://en.wikipedia.org/wiki/W3m
+    2. https://en.wikipedia.org/wiki/W3m
+    3. https://en.wikipedia.org/wiki/Lynx_(web_browser)
     4. https://github.com/sharkdp/bat
     5. http://www.andre-simon.de/doku/highlight/en/highlight.php
     6. https://pygments.org/
@@ -4282,6 +4433,16 @@ Options:
 Description:
   Sync the current local notebook with the remote repository.
 
+Private Repositories and Git Credentials:
+  Syncing with private repositories requires configuring git to not prompt
+  for credentials.
+
+  For repositories cloned over HTTPS, credentials can be cached with git.
+  For repositories cloned over SSH, keys can be added to the ssh-agent.
+
+  More Information:
+    https://github.com/xwmx/nb#private-repositories-and-git-credentials
+
 Sync Conflict Resolution:
   When `nb sync` encounters a conflict in a text file and can't merge
   overlapping local and remote changes, both versions are saved in the
@@ -4290,8 +4451,11 @@ Sync Conflict Resolution:
 
   When `nb sync` encounters a conflict in a binary file, such as an
   encrypted note or bookmark, both versions of the file are saved in the
-  notebook as individual files, one with `--conflicted` appended to the
-  filename.
+  notebook as individual files, one with `--conflicted-copy` appended to
+  the filename.
+
+  More Information:
+    https://github.com/xwmx/nb#sync-conflict-resolution
 ```
 
 #### `update`
@@ -4337,10 +4501,33 @@ Description:
 ### Plugins
 
 <p align="center">
+  <a href="#backlink">backlink</a> •
   <a href="#copy">copy</a> •
   <a href="#ebook">ebook</a> •
   <a href="#example">example</a>
 </p>
+
+#### `backlink`
+
+```text
+Usage:
+  nb backlink [--force]
+
+Description:
+  Add backlinks to notes. Crawl notes in a notebook for [[wiki-style links]]
+  and append a "Backlinks" section to each linked file that lists passages
+  referencing the note.
+
+  To link to a note from within another note, surround the title of the
+  target note in double square brackets:
+
+      Example with link to [[Target Note Title]] in content.
+
+  Depends on note-link-janitor:
+    https://github.com/andymatuschak/note-link-janitor
+
+    Requirement: every note in the notebook must have a title.
+```
 
 #### `copy`
 
@@ -4373,7 +4560,7 @@ Description:
   for creating an ebook. Edit the title page and chapters using normal `nb`
   commands, then use `nb ebook publish` to generate an epub file.
 
-  Chapters are expected to be markdown files with a sequential numeric
+  Chapters are expected to be markdown files with sequential numeric
   filename prefixes for ordering:
 
     01-example.md
@@ -4677,8 +4864,10 @@ at the root level of the notebook directory.
 ## Tests
 
 To run the [test suite](test), install
-[Bats](https://github.com/bats-core/bats-core) and run `bats test` in the project
-root.
+[Bats](https://github.com/bats-core/bats-core)
+and the
+[recommended dependencies](#optional),
+then run `bats test` in the project root.
 
 ---
 <p align="center">
