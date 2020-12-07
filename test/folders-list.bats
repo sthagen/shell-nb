@@ -2,73 +2,6 @@
 
 load test_helper
 
-# list notebook:<id> ##########################################################
-
-@test "'list notebook:<id>/<folder>' exits with 0 and prints the folder/folder list item." {
-  {
-    "${_NB}" init
-
-    "${_NB}" add "Example Folder/one.md"                        \
-      --title "one"
-    "${_NB}" add "Example Folder/two.bookmark.md"               \
-      --content "<https://example.test>"
-
-    "${_NB}" add "Example Folder/Sample Folder/one.bookmark.md" \
-      --content "<https://example.test>"
-    "${_NB}" add "Example Folder/Sample Folder/two.md"          \
-      --title "Two"
-
-    "${_NB}" notebooks add "one"
-    "${_NB}" use "one"
-
-    [[ "$("${_NB}" notebooks current)" == "one" ]]
-}
-
-  run "${_NB}" list home:1/Sample\ Folder
-
-  printf "\${status}: '%s'\\n" "${status}"
-  printf "\${output}: '%s'\\n" "${output}"
-
-  [[   "${status}"    -eq 0                                   ]]
-
-  [[   "${lines[0]}"  =~  [^/]home:Example\\\ Folder/3        ]]
-  [[ ! "${lines[0]}"  =~  Example\\\ Folder/Sample\\\ Folder  ]]
-  [[   "${lines[0]}"  =~  📂                                  ]]
-
-  [[ ! "${lines[0]}"  =~  Example\ Folder/Sample\ Folder      ]]
-  [[   "${lines[0]}"  =~  Sample\ Folder                      ]]
-}
-
-@test "'list <id>/<folder>' exits with 0 and prints the folder/folder list item." {
-  {
-    "${_NB}" init
-
-    "${_NB}" add "Example Folder/one.md"                        \
-      --title "one"
-    "${_NB}" add "Example Folder/two.bookmark.md"               \
-      --content "<https://example.test>"
-
-    "${_NB}" add "Example Folder/Sample Folder/one.bookmark.md" \
-      --content "<https://example.test>"
-    "${_NB}" add "Example Folder/Sample Folder/two.md"          \
-      --title "Two"
-}
-
-  run "${_NB}" list 1/Sample\ Folder
-
-  printf "\${status}: '%s'\\n" "${status}"
-  printf "\${output}: '%s'\\n" "${output}"
-
-  [[   "${status}"    -eq 0                                   ]]
-
-  [[   "${lines[0]}"  =~  Example\\\ Folder/3                 ]]
-  [[ ! "${lines[0]}"  =~  Example\\\ Folder/Sample\\\ Folder  ]]
-  [[   "${lines[0]}"  =~  📂                                  ]]
-
-  [[ ! "${lines[0]}"  =~  Example\ Folder/Sample\ Folder      ]]
-  [[   "${lines[0]}"  =~  Sample\ Folder                      ]]
-}
-
 # empty #######################################################################
 
 @test "'list <folder>/ --type' with empty folder displays message." {
@@ -83,8 +16,10 @@ load test_helper
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
 
-  [[   "${status}"    -eq 0                 ]]
-  [[   "${lines[0]}"  =~  0\ audio\ files\. ]]
+  [[   "${status}"    -eq 0                                 ]]
+  [[   "${lines[0]}"  =~  0\ audio\ files\.                 ]]
+  [[   "${lines[2]}"  =~  import\ \(\<path\>\ \|\ \<url\>\) ]]
+  [[   "${lines[2]}"  =~  Example\\\ Folder/                ]]
 }
 
 @test "'list <id>/ --type' with empty folder displays message." {
@@ -99,8 +34,10 @@ load test_helper
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
 
-  [[   "${status}"    -eq 0                 ]]
-  [[   "${lines[0]}"  =~  0\ audio\ files\. ]]
+  [[   "${status}"    -eq 0                                 ]]
+  [[   "${lines[0]}"  =~  0\ audio\ files\.                 ]]
+  [[   "${lines[2]}"  =~  import\ \(\<path\>\ \|\ \<url\>\) ]]
+  [[   "${lines[2]}"  =~  Example\\\ Folder/                ]]
 }
 
 @test "'list <folder>/' with empty folder displays message." {
@@ -115,8 +52,14 @@ load test_helper
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
 
-  [[   "${status}"    -eq 0           ]]
-  [[   "${lines[0]}"  =~  0\ items\.  ]]
+  [[   "${status}"    -eq 0                                 ]]
+  [[   "${lines[0]}"  =~  0\ items\.                        ]]
+  [[   "${lines[2]}"  =~  add                               ]]
+  [[   "${lines[2]}"  =~  Example\\\ Folder/                ]]
+  [[   "${lines[3]}"  =~  bookmark                          ]]
+  [[   "${lines[4]}"  =~  Example\\\ Folder/\ \<url\>       ]]
+  [[   "${lines[6]}"  =~  import\ \(\<path\>\ \|\ \<url\>\) ]]
+  [[   "${lines[6]}"  =~  Example\\\ Folder/                ]]
 }
 
 @test "'list <id>/' with empty folder displays message." {
@@ -131,8 +74,14 @@ load test_helper
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
 
-  [[   "${status}"    -eq 0           ]]
-  [[   "${lines[0]}"  =~  0\ items\.  ]]
+  [[   "${status}"    -eq 0                                 ]]
+  [[   "${lines[0]}"  =~  0\ items\.                        ]]
+  [[   "${lines[2]}"  =~  add                               ]]
+  [[   "${lines[2]}"  =~  Example\\\ Folder/                ]]
+  [[   "${lines[3]}"  =~  bookmark                          ]]
+  [[   "${lines[4]}"  =~  Example\\\ Folder/\ \<url\>       ]]
+  [[   "${lines[6]}"  =~  import\ \(\<path\>\ \|\ \<url\>\) ]]
+  [[   "${lines[6]}"  =~  Example\\\ Folder/                ]]
 }
 
 @test "'list <folder>/<folder>/' with empty folder displays message." {
@@ -147,8 +96,14 @@ load test_helper
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
 
-  [[   "${status}"    -eq 0           ]]
-  [[   "${lines[0]}"  =~  0\ items\.  ]]
+  [[   "${status}"    -eq 0                                             ]]
+  [[   "${lines[0]}"  =~  0\ items\.                                    ]]
+  [[   "${lines[2]}"  =~  add                                           ]]
+  [[   "${lines[2]}"  =~  Example\\\ Folder/Sample\\\ Folder/           ]]
+  [[   "${lines[3]}"  =~  bookmark                                      ]]
+  [[   "${lines[4]}"  =~  Example\\\ Folder/Sample\\\ Folder/\ \<url\>  ]]
+  [[   "${lines[6]}"  =~  import\ \(\<path\>\ \|\ \<url\>\)             ]]
+  [[   "${lines[6]}"  =~  Example\\\ Folder/Sample\\\ Folder            ]]
 }
 
 @test "'list <id>/<id>/' with empty folder displays message." {
@@ -163,11 +118,47 @@ load test_helper
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
 
-  [[   "${status}"    -eq 0           ]]
-  [[   "${lines[0]}"  =~  0\ items\.  ]]
+  [[   "${status}"    -eq 0                                             ]]
+  [[   "${lines[0]}"  =~  0\ items\.                                    ]]
+  [[   "${lines[2]}"  =~  add                                           ]]
+  [[   "${lines[2]}"  =~  Example\\\ Folder/Sample\\\ Folder/           ]]
+  [[   "${lines[3]}"  =~  bookmark                                      ]]
+  [[   "${lines[4]}"  =~  Example\\\ Folder/Sample\\\ Folder/\ \<url\>  ]]
+  [[   "${lines[6]}"  =~  import\ \(\<path\>\ \|\ \<url\>\)             ]]
+  [[   "${lines[6]}"  =~  Example\\\ Folder/Sample\\\ Folder            ]]
 }
 
 # error handling ##############################################################
+
+@test "'list <not-valid-id>/' exits with 1 and prints message." {
+  {
+    "${_NB}" init
+
+    "${_NB}" add "Example Folder/one.md"            \
+      --title "one"
+    "${_NB}" add "Example Folder/two.bookmark.md"   \
+      --content "<https://example.test>"
+    "${_NB}" add "Example Folder/three.bookmark.md" \
+      --content "<https://example.test>"            \
+      --encrypt --password=password
+  }
+
+  run "${_NB}" list 10/
+
+  printf "\${status}: '%s'\\n" "${status}"
+  printf "\${output}: '%s'\\n" "${output}"
+
+  [[   "${status}"    -eq 1           ]]
+
+  [[   "${lines[0]}"  =~ Not\ found:  ]]
+  [[   "${lines[0]}"  =~ 10           ]]
+
+  [[ ! "${output}"  =~ three          ]]
+  [[ ! "${output}"  =~ 🔖\ 🔒         ]]
+  [[ ! "${output}"  =~ two            ]]
+  [[ ! "${output}"  =~ 🔖             ]]
+  [[ ! "${output}"  =~ one            ]]
+}
 
 @test "'list not-valid/' exits with 1 and prints message." {
   {
@@ -197,6 +188,37 @@ load test_helper
   [[ ! "${output}"  =~ two            ]]
   [[ ! "${output}"  =~ 🔖             ]]
   [[ ! "${output}"  =~ one            ]]
+}
+
+@test "'list valid/<not-valid-id>/' exits with 1 and prints message." {
+  {
+    "${_NB}" init
+
+    "${_NB}" add "Example Folder/Sample Folder/one.md"            \
+      --title "one"
+    "${_NB}" add "Example Folder/Sample Folder/two.bookmark.md"   \
+      --content "<https://example.test>"
+    "${_NB}" add "Example Folder/Sample Folder/three.bookmark.md" \
+      --content "<https://example.test>"                          \
+      --encrypt --password=password
+    "${_NB}" add "Example Folder/Sample 2 Folder 2" --type folder
+  }
+
+  run "${_NB}" list Example\ Folder/10/
+
+  printf "\${status}: '%s'\\n" "${status}"
+  printf "\${output}: '%s'\\n" "${output}"
+
+  [[   "${status}"    -eq 1                         ]]
+
+  [[   "${lines[0]}"  =~ Not\ found:                ]]
+  [[   "${lines[0]}"  =~ Example\ Folder/10         ]]
+
+  [[ ! "${output}"  =~ three                        ]]
+  [[ ! "${output}"  =~ 🔖\ 🔒                       ]]
+  [[ ! "${output}"  =~ two                          ]]
+  [[ ! "${output}"  =~ 🔖                           ]]
+  [[ ! "${output}"  =~ one                          ]]
 }
 
 @test "'list valid/not-valid/' exits with 1 and prints message." {
@@ -329,6 +351,73 @@ load test_helper
 
   [[   "${lines[0]}"  =~ Not\ found:          ]]
   [[   "${lines[0]}"  =~ not-valid/not-valid  ]]
+}
+
+# list notebook:<id> ##########################################################
+
+@test "'list notebook:<id>/<folder>' exits with 0 and prints the folder/folder list item." {
+  {
+    "${_NB}" init
+
+    "${_NB}" add "Example Folder/one.md"                        \
+      --title "one"
+    "${_NB}" add "Example Folder/two.bookmark.md"               \
+      --content "<https://example.test>"
+
+    "${_NB}" add "Example Folder/Sample Folder/one.bookmark.md" \
+      --content "<https://example.test>"
+    "${_NB}" add "Example Folder/Sample Folder/two.md"          \
+      --title "Two"
+
+    "${_NB}" notebooks add "one"
+    "${_NB}" use "one"
+
+    [[ "$("${_NB}" notebooks current)" == "one" ]]
+}
+
+  run "${_NB}" list home:1/Sample\ Folder
+
+  printf "\${status}: '%s'\\n" "${status}"
+  printf "\${output}: '%s'\\n" "${output}"
+
+  [[   "${status}"    -eq 0                                   ]]
+
+  [[   "${lines[0]}"  =~  [^/]home:Example\\\ Folder/3        ]]
+  [[ ! "${lines[0]}"  =~  Example\\\ Folder/Sample\\\ Folder  ]]
+  [[   "${lines[0]}"  =~  📂                                  ]]
+
+  [[ ! "${lines[0]}"  =~  Example\ Folder/Sample\ Folder      ]]
+  [[   "${lines[0]}"  =~  Sample\ Folder                      ]]
+}
+
+@test "'list <id>/<folder>' exits with 0 and prints the folder/folder list item." {
+  {
+    "${_NB}" init
+
+    "${_NB}" add "Example Folder/one.md"                        \
+      --title "one"
+    "${_NB}" add "Example Folder/two.bookmark.md"               \
+      --content "<https://example.test>"
+
+    "${_NB}" add "Example Folder/Sample Folder/one.bookmark.md" \
+      --content "<https://example.test>"
+    "${_NB}" add "Example Folder/Sample Folder/two.md"          \
+      --title "Two"
+}
+
+  run "${_NB}" list 1/Sample\ Folder
+
+  printf "\${status}: '%s'\\n" "${status}"
+  printf "\${output}: '%s'\\n" "${output}"
+
+  [[   "${status}"    -eq 0                                   ]]
+
+  [[   "${lines[0]}"  =~  Example\\\ Folder/3                 ]]
+  [[ ! "${lines[0]}"  =~  Example\\\ Folder/Sample\\\ Folder  ]]
+  [[   "${lines[0]}"  =~  📂                                  ]]
+
+  [[ ! "${lines[0]}"  =~  Example\ Folder/Sample\ Folder      ]]
+  [[   "${lines[0]}"  =~  Sample\ Folder                      ]]
 }
 
 # list <id>/ ##################################################################

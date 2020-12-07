@@ -79,7 +79,7 @@ on any device.
 `nb` is designed to be portable, future-focused, and vendor independent,
 providing a full-featured and intuitive experience within a highly composable
 user-centric text interface.
-The entire program is a single [well-tested](https://github.com/xwmx/nb#tests)
+The entire program is a single [well-tested](#tests)
 shell script that can be
 installed, copied, or `curl`ed almost anywhere and just work, using
 [progressive enhancement](https://en.wikipedia.org/wiki/Progressive_enhancement)
@@ -174,7 +174,8 @@ Also supported for various enhancements:
 [Pygments](https://pygments.org/),
 [Ranger](https://ranger.github.io/),
 [readability-cli](https://gitlab.com/gardenappl/readability-cli),
-[`termpdf.py`](https://github.com/dsanson/termpdf.py)
+[`termpdf.py`](https://github.com/dsanson/termpdf.py),
+[vifm](https://vifm.info/)
 
 #### macOS / Homebrew
 
@@ -1775,10 +1776,10 @@ Notes can also be moved between notebooks:
 
 ```bash
 # move note 3 from the current notebook to "example"
-nb move 3 example
+nb move 3 example:
 
 # move note 5 in the notebook "example" to the notebook "sample"
-nb move example:5 sample
+nb move example:5 sample:
 ```
 
 ##### Example Workflow
@@ -1904,10 +1905,10 @@ nb add
 nb edit 15
 
 # move note titled "Todos" from the home notebook to the local notebook
-nb move home:Todos local
+nb move home:Todos local:
 
 # move note 1 from the local notebook to the home notebook
-nb move 1 home
+nb move 1 home:
 
 # search the local notebook for <query string>
 nb search "query string"
@@ -2420,12 +2421,6 @@ nb set color_theme
 |:--:|:--:|
 |    |    |
 
-##### `monochrome`
-
-| ![monochrome](https://xwmx.github.io/misc/nb/images/nb-theme-monochrome-home.png)  |  ![monochrome](https://xwmx.github.io/misc/nb/images/nb-theme-monochrome-bookmarks.png) |
-|:--:|:--:|
-|    |    |
-
 ##### `nb` (default)
 
 | ![nb](https://xwmx.github.io/misc/nb/images/nb-theme-nb-home.png)  |  ![nb](https://xwmx.github.io/misc/nb/images/nb-theme-nb-bookmarks.png) |
@@ -2441,6 +2436,12 @@ nb set color_theme
 ##### `raspberry`
 
 | ![raspberry](https://xwmx.github.io/misc/nb/images/nb-theme-raspberry-home.png)  |  ![raspberry](https://xwmx.github.io/misc/nb/images/nb-theme-raspberry-bookmarks.png) |
+|:--:|:--:|
+|    |    |
+
+##### `smoke`
+
+| ![smoke](https://xwmx.github.io/misc/nb/images/nb-theme-monochrome-home.png)  |  ![smoke](https://xwmx.github.io/misc/nb/images/nb-theme-monochrome-bookmarks.png) |
 |:--:|:--:|
 |    |    |
 
@@ -2874,8 +2875,9 @@ Usage:
   nb
   nb [<ls options>...] [<id> | <filename> | <path> | <title> | <notebook>]
   nb [<url>] [<bookmark options>...]
-  nb add [<filename> | <content>] [-c <content> | --content <content>]
-         [-e | --encrypt] [-f <filename> | --filename <filename>]
+  nb add [<notebook>:][<filename> | <folder-path> | <content>]
+         [-c <content> | --content <content>] [--edit] [-e | --encrypt]
+         [-f <filename> | --filename <filename>] [--folder <folder-path>]
          [-t <title> | --title <title>] [--type <type>]
   nb add folder [<name>]
   nb bookmark [<ls options>...]
@@ -2913,9 +2915,9 @@ Usage:
           [-r | --reverse] [-t <type> | --type <type> | --<type>]
           [<id> | <filename> | <path> | <title> | <query>]
   nb ls [-a | --all] [-e [<length>] | --excerpt [<length>]] [--filenames]
-        [-n <limit> | --limit <limit> | --<limit>] [--no-id] [--no-indicator]
-        [-p | --pager] [--paths] [-s | --sort] [-r | --reverse]
-        [-t <type> | --type <type> | --<type>]
+        [-n <limit> | --limit <limit> | --<limit>] [--no-footer] [--no-header]
+        [--no-id] [--no-indicator] [-p | --pager] [--paths] [-s | --sort]
+        [-r | --reverse] [-t <type> | --type <type> | --<type>]
         [<id> | <filename> | <path> | <title> | <query>]
   nb move [<notebook>:](<id> | <filename> | <path> | <title>) [-f | --force]
           ([<notebook>:][<path>] | --reset | --to-bookmark | --to-note)
@@ -2952,9 +2954,10 @@ Usage:
   nb settings (get | show | unset) (<name> | <number>)
   nb settings set (<name> | <number>) <value>
   nb shell [<subcommand> [<options>...] | --clear-history]
-  nb show (<id> | <filename> | <path> | <title>) [--added | --filename |
-          --id | --info-line | --path | [-p | --print] [-r | --render] |
-          --selector-id | --title | --type [<type>] | --updated]
+  nb show (<id> | <filename> | <path> | <title>) [[-a | --added] |
+          --filename | --id | --info-line | --path | [-p | --print]
+          [-r | --render] | --selector-id | --title | --type [<type>] |
+          [-u | --updated]] [--no-color]
   nb show <notebook>
   nb subcommands [add <name>...] [alias <name> <alias>]
                  [describe <name> <usage>]
@@ -3155,8 +3158,9 @@ For more information, see: `nb help`.
 
 ```text
 Usage:
-  nb add [<filename> | <content>] [-c <content> | --content <content>]
-         [--edit] [-e | --encrypt] [-f <filename> | --filename <filename>]
+  nb add [<notebook>:][<filename> | <folder-path> | <content>]
+         [-c <content> | --content <content>] [--edit] [-e | --encrypt]
+         [-f <filename> | --filename <filename>] [--folder <folder-path>]
          [-t <title> | --title <title>] [--type <type>]
   nb add folder [<name>]
 
@@ -3166,6 +3170,7 @@ Options:
                               content is piped or passed as an argument.
   -e, --encrypt               Encrypt the note with a password.
   -f, --filename <filename>   The filename for the new note.
+  --folder <folder-path>      Add within the folder located at <folder-path>.
   -t, --title <title>         The title for a new note. If `--title` is
                               present, the filename will be derived from the
                               title, unless `--filename` is specified.
@@ -3176,7 +3181,7 @@ Description:
   Create a new note or folder.
 
   If no arguments are passed, a new blank note file is opened with
-  `$EDITOR`, currently set to "example". If a non-option argument is
+  `$EDITOR`, currently set to "vim". If a non-option argument is
   passed, `nb` will treat it as a <filename≥ if a file extension is found.
   If no file extension is found, `nb` will treat the string as
   <content> and will create a new note without opening the editor.
@@ -3634,9 +3639,9 @@ Examples:
 ```text
 Usage:
   nb ls [-a | --all] [-e [<length>] | --excerpt [<length>]] [--filenames]
-        [--no-id] [--no-indicator] [-n <limit> | --limit <limit> | --<limit>]
-        [-p | --pager] [--paths] [-s | --sort] [-r | --reverse]
-        [-t <type> | --type <type> | --<type>]
+        [-n <limit> | --limit <limit> | --<limit>] [--no-footer] [--no-header]
+        [--no-id] [--no-indicator] [-p | --pager] [--paths] [-s | --sort]
+        [-r | --reverse] [-t <type> | --type <type> | --<type>]
         [<id> | <filename> | <path> | <title> | <query>]
 
 Options:
@@ -3647,6 +3652,8 @@ Options:
   --filenames                     Print the filename for each note.
   -n, --limit <limit>, --<limit>  The maximum number of listed items.
                                   [default: 20]
+  --no-header                     Print without header.
+  --no-footer                     Print without footer.
   --no-id                         Don't include the id in list items.
   --no-indicator                  Don't include the indicator in list items.
   -p, --pager                     Display output in the pager.
@@ -3799,20 +3806,21 @@ Subcommands:
              Shortcut Alias: `o`
   peek       Open the current notebook directory or notebook <name> in the
              first tool found in the following list:
-             `ranger` [1], `mc` [2], `exa` [3], or `ls`.
+             `ranger` [1], `mc` [2], `vifm` [3], `exa` [4], or `ls`.
              Shortcut Alias: `p`
   rename     Rename a notebook.
   select     Set the current notebook from a colon-prefixed selector.
              Not persisted. Selection format: <notebook>:<identifier>
-  show       Show and return information about a specified notebook.
   status     Print the archival status of the current notebook or
              notebook <name>.
+  show       Show and return information about a specified notebook.
   unarchive  Remove "archived" status from current notebook or notebook <name>.
   use        Switch to a notebook.
 
     1. https://ranger.github.io/
     2. https://en.wikipedia.org/wiki/Midnight_Commander
-    3. https://github.com/ogham/exa
+    3. https://vifm.info/
+    4. https://github.com/ogham/exa
 
 Description:
   Manage notebooks.
@@ -4120,10 +4128,10 @@ Alias: `set`
          desert
          electro
          forest
-         monochrome
          nb
          ocean
          raspberry
+         smoke
          unicorn
          utility
 
@@ -4306,7 +4314,7 @@ Usage:
   nb show (<id> | <filename> | <path> | <title>) [[-a | --added] |
           --filename | --id | --info-line | --path | [-p | --print]
           [-r | --render] | --selector-id | --title | --type [<type>] |
-          [-u | --updated]]
+          [-u | --updated]] [--no-color]
   nb show <notebook>
 
 Options:
@@ -4314,6 +4322,7 @@ Options:
   --filename       Print the filename of the item.
   --id             Print the id number of the item.
   --info-line      Print the id, filename, and title of the item.
+  --no-color       Show without syntax highlighting.
   --path           Print the full path of the item.
   -p, --print      Print to standard output / terminal.
   -r, --render     Use `pandoc` [1] to render the file to HTML and display
@@ -4826,7 +4835,7 @@ Usage:
   nb index show
   nb index update <existing-filename> <new-filename>
   nb index verify
-  nb index <subcommand> <options>...
+  nb index <subcommand> <options>... [<folder-path>]
 
 Options:
   --ancestors   Perform the action on all folders within the notebook that
@@ -4846,10 +4855,12 @@ Subcommands:
   verify        Verify that the index matches the folder contents.
 
 Description:
-  Manage the index for the current folder. This subcommand is used
-  internally by `nb` and using it manually will probably corrupt
-  the index. If something goes wrong with an index, fix it with
-  `nb index reconcile`.
+  Manage the index for the current folder or the folder at <folder-path>,
+  which can be passed as the final argument to any `index` subcommand.
+
+  `index` is used internally by `nb` and using it manually will
+  probably corrupt the index. If something goes wrong with an index,
+  fix it with `nb index reconcile`.
 
   An index is a text file named '.index' in any folder within a notebook.
   .index contains a list of filenames and the line number of each filename
@@ -4864,13 +4875,15 @@ at the root level of the notebook directory.
 
 ## Tests
 
-With over 1,000 tests spanning more than 30,000 lines, `nb` is really
+With more than 1,000 tests spanning over 30,000 lines, `nb` is really
 mostly a [test suite](https://github.com/xwmx/nb/tree/master/test).
+[Tests run continuously via GitHub Actions](https://github.com/xwmx/nb/actions)
+on recent versions of both Ubuntu and macOS to account for differences between
+BSD and GNU tools and Bash versions.
 To run the tests locally, install
 [Bats](https://github.com/bats-core/bats-core)
-and the
-[recommended dependencies](#optional),
-then run `bats test` in the project root.
+and the [recommended dependencies](#optional),
+then run `bats test` within the project root directory.
 
 ---
 <p align="center">

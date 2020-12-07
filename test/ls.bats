@@ -24,6 +24,44 @@ line four
 HEREDOC
 }
 
+# --no-header / --no-footer ###################################################
+
+@test "'ls --no-header' does not include header." {
+  {
+    _setup_ls
+
+    "${_NB}" notebooks add "example-notebook"
+  }
+
+  run "${_NB}" ls --no-header
+
+  printf "\${status}: '%s'\\n" "${status}"
+  printf "\${output}: '%s'\\n" "${output}"
+
+  [[    "${status}"   -eq   0                 ]]
+  [[    "${output}"   =~    two               ]]
+  [[ !  "${output}"   =~    example-notebook  ]]
+  [[    "${output}"   =~    ❯                 ]]
+}
+
+@test "'ls --no-footer' does not include footer." {
+  {
+    _setup_ls
+
+    "${_NB}" notebooks add "example-notebook"
+  }
+
+  run "${_NB}" ls --no-footer
+
+  printf "\${status}: '%s'\\n" "${status}"
+  printf "\${output}: '%s'\\n" "${output}"
+
+  [[    "${status}"   -eq   0                 ]]
+  [[    "${output}"   =~    two               ]]
+  [[    "${output}"   =~    example-notebook  ]]
+  [[ !  "${output}"   =~    ❯                 ]]
+}
+
 # `scoped:ls` #################################################################
 
 @test "'scoped:ls' exits with 0 and lists files in reverse order." {
@@ -154,7 +192,7 @@ Help information:
 @test "'ls' includes footer." {
   {
     _setup_ls
-    _files=($(ls "${_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" ls
@@ -170,7 +208,7 @@ Help information:
 @test "'NB_FOOTER=0 ls' does not include footer." {
   {
     _setup_ls
-    _files=($(ls "${_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   NB_FOOTER=0 run "${_NB}" ls
@@ -186,7 +224,7 @@ Help information:
 @test "'ls' footer includes command names." {
   {
     _setup_ls
-    _files=($(ls "${_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" ls
@@ -205,10 +243,10 @@ Help information:
 @test "'ls' footer scopes command names to a selected notebook." {
   {
     _setup_ls
-    _files=($(ls "${_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
 
-    run "${_NB}" notebooks add "example"
-    run "${_NB}" use example
+    "${_NB}" notebooks add "example"
+    "${_NB}" use example
 
     [[ "$("${_NB}" notebooks current)" == "example" ]]
   }
@@ -221,7 +259,7 @@ Help information:
 
   [[ ${status}      -eq 0                     ]]
   [[ "${lines[6]}"  =~  ❯                     ]]
-  [[ "${lines[6]}"  =~  nb\ home:add          ]]
+  [[ "${lines[6]}"  =~  nb\ add\ home:        ]]
   [[ "${lines[6]}"  =~  nb\ home:\ \<url\>    ]]
   [[ "${lines[6]}"  =~  nb\ edit\ home:\<id\> ]]
 }
@@ -229,11 +267,11 @@ Help information:
 @test "'ls' footer escapes multi-word selected notebook names." {
   {
     _setup_ls
-    _files=($(ls "${_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
 
-    run "${_NB}" notebooks add "example"
-    run "${_NB}" use example
-    run "${_NB}" notebooks rename home "multi word"
+    "${_NB}" notebooks add "example"
+    "${_NB}" use example
+    "${_NB}" notebooks rename home "multi word"
 
     _notebooks=(
       "example"
@@ -254,7 +292,7 @@ Help information:
 
   [[ ${status}      -eq 0                               ]]
   [[ "${lines[6]}"  =~  ❯                               ]]
-  [[ "${lines[6]}"  =~  nb\ multi\\\ word:add           ]]
+  [[ "${lines[6]}"  =~  nb\ add\ multi\\\ word:         ]]
   [[ "${lines[6]}"  =~  nb\ multi\\\ word:\ \<url\>     ]]
   [[ "${lines[6]}"  =~  nb\ edit\ multi\\\ word:\<id\>  ]] ||
     [[ "${lines[7]}"  =~  nb\ edit\ multi\\\ word:\<id\>  ]]
@@ -265,7 +303,7 @@ Help information:
 @test "'ls' includes header." {
   {
     _setup_ls
-    _files=($(ls "${_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" ls
@@ -281,7 +319,7 @@ Help information:
 @test "'NB_HEADER=0 ls' does not include header." {
   {
     _setup_ls
-    _files=($(ls "${_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   NB_HEADER=0 run "${_NB}" ls
@@ -297,11 +335,11 @@ Help information:
 @test "'ls' header does not escape multi-word notebook names." {
   {
     _setup_ls
-    _files=($(ls "${_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
 
-    run "${_NB}" notebooks add "example"
-    run "${_NB}" use example
-    run "${_NB}" notebooks rename home "multi word"
+    "${_NB}" notebooks add "example"
+    "${_NB}" use example
+    "${_NB}" notebooks rename home "multi word"
 
     _notebooks=(
       "example"
@@ -328,7 +366,7 @@ Help information:
 @test "'ls' header shows added and deleted notebook." {
   {
     _setup_ls
-    _files=($(ls "${_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" ls
@@ -366,7 +404,7 @@ Help information:
 @test "'ls' header shows externally added and deleted notebook." {
   {
     _setup_ls
-    _files=($(ls "${_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" ls
@@ -406,7 +444,7 @@ Help information:
 @test "'ls' exits with 0 and lists files." {
   {
     _setup_ls
-    _files=($(ls "${_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" ls
@@ -428,7 +466,7 @@ Help information:
     _setup_ls
     "${_NB}" notebooks add one
     "${_NB}" one:notebook archive
-    _files=($(ls "${_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" ls
@@ -454,7 +492,7 @@ Help information:
     [[ "$(pwd)" == "${_TMP_DIR}/example" ]]
     git init 1>/dev/null && touch "${_TMP_DIR}/example/.index"
 
-    _files=($(ls "${_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" ls
@@ -475,7 +513,7 @@ Help information:
 @test "'ls -e <excerpt length>' exits with 0 and displays excerpts." {
   {
     _setup_ls
-    _files=($(ls "${_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" ls -e 5
@@ -493,7 +531,7 @@ Help information:
 @test "'ls -n 0' exits with 0 and lists 0 files." {
   {
     _setup_ls
-    _files=($(ls "${_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" ls -n 0
@@ -509,7 +547,7 @@ Help information:
 @test "'ls -n 1' exits with 0 and lists 1 file." {
   {
     _setup_ls
-    _files=($(ls "${_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" ls -n 1
@@ -527,7 +565,7 @@ Help information:
 @test "'ls -n 2' exits with 0 and lists 2 files." {
   {
     _setup_ls
-    _files=($(ls "${_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" ls -n 2
@@ -546,7 +584,7 @@ Help information:
 @test "'ls -n 3' exits with 0 and lists 3 files." {
   {
     _setup_ls
-    _files=($(ls "${_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" ls -n 3
@@ -566,7 +604,7 @@ Help information:
 @test "'ls --limit 3' exits with 0 and lists 3 files." {
   {
     _setup_ls
-    _files=($(ls "${_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" ls -n 3
@@ -586,7 +624,7 @@ Help information:
 @test "'ls --3' exits with 0 and lists 3 files." {
   {
     _setup_ls
-    _files=($(ls "${_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" ls --3
@@ -822,7 +860,7 @@ HEREDOC
 @test "'ls <selector>' exits with 0 and displays the selector." {
   {
     _setup_ls
-    _files=($(ls "${_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" ls 1 --filenames
@@ -841,7 +879,7 @@ HEREDOC
 @test "'ls <query selector>' exits with 0 and displays the selectors." {
   {
     _setup_ls
-    _files=($(ls "${_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" ls 'r' --filenames
@@ -887,7 +925,7 @@ line two
 line three
 line four
 HEREDOC
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" ls 'example plum' --filenames
@@ -929,7 +967,7 @@ line two
 line three
 line four
 HEREDOC
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" ls example plum --filenames
@@ -958,7 +996,7 @@ line three
 line four
 HEREDOC
     sleep 1
-    _files=($(ls "${_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" ls not-valid
@@ -1010,7 +1048,7 @@ HEREDOC
   printf "\${#lines[@]}: '%s'\\n" "${#lines[@]}"
 
   [[ ${status} -eq 0                ]]
-  [[ "${#lines[@]}" -eq 8           ]]
+  [[ "${#lines[@]}" -ge 7           ]]
   [[ "${lines[3]}" =~ one\ example  ]]
   [[ "${lines[3]}" =~ [*1*]         ]]
 }
@@ -1052,7 +1090,7 @@ HEREDOC
   printf "\${#lines[@]}: '%s'\\n" "${#lines[@]}"
 
   [[ ${status} -eq 0                ]]
-  [[ "${#lines[@]}" -eq 8           ]]
+  [[ "${#lines[@]}" -ge 7           ]]
   [[ "${lines[3]}" =~ one\ example  ]]
   [[ "${lines[3]}" =~ [*1*]         ]]
 }
@@ -1122,7 +1160,7 @@ line two
 line three
 line four
 HEREDOC
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" ls --document
@@ -1158,7 +1196,7 @@ line two
 line three
 line four
 HEREDOC
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" ls --documents
@@ -1188,7 +1226,7 @@ line two
 line three
 line four
 HEREDOC
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" ls --document
@@ -1218,7 +1256,7 @@ line two
 line three
 line four
 HEREDOC
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" ls --documents
@@ -1247,7 +1285,7 @@ line two
 line three
 line four
 HEREDOC
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" ls --js
@@ -1288,7 +1326,7 @@ line two
 line three
 line four
 HEREDOC
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" ls example --document
@@ -1330,7 +1368,7 @@ line two
 line three
 line four
 HEREDOC
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" ls example --not-valid
@@ -1374,7 +1412,7 @@ line two
 line three
 line four
 HEREDOC
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" ls matchless-query --document
@@ -1419,7 +1457,7 @@ line two
 line three
 line four
 HEREDOC
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" example: matchless-query --document

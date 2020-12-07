@@ -6,12 +6,12 @@ load test_helper
 
 @test "'delete' with no argument exits with 1, prints help, and does not delete." {
   {
-    run "${_NB}" init
-    run "${_NB}" add
+    "${_NB}" init
+    "${_NB}" add
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
 
-    [[ -e "${_NOTEBOOK_PATH}/${_filename}" ]]
+    [[ -e "${NB_DIR}/home/${_filename}" ]]
   }
 
   run "${_NB}" delete --force
@@ -23,10 +23,10 @@ load test_helper
   [[ ${status} -eq 1                      ]]
 
   # Does not delete note file
-  [[ -e "${_NOTEBOOK_PATH}/${_filename}"  ]]
+  [[ -e "${NB_DIR}/home/${_filename}"     ]]
 
   # Does not create git commit
-  cd "${_NOTEBOOK_PATH}" || return 1
+  cd "${NB_DIR}/home" || return 1
   while [[ -n "$(git status --porcelain)" ]]
   do
     sleep 1
@@ -42,7 +42,7 @@ load test_helper
 
 @test "'delete <selector>' with empty repo exits with 1 and prints message." {
   {
-    run "${_NB}" init
+    "${_NB}" init
   }
 
   run "${_NB}" delete 1 --force
@@ -58,12 +58,12 @@ load test_helper
 @test "'delete <selector> (no force)' returns 0 and deletes note." {
   skip "Determine how to test interactive prompt."
   {
-    run "${_NB}" init
-    run "${_NB}" add
+    "${_NB}" init
+    "${_NB}" add
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
 
-    [[ -e "${_NOTEBOOK_PATH}/${_filename}"  ]]
+    [[ -e "${NB_DIR}/home/${_filename}"  ]]
   }
 
   run "${_NB}" delete "${_filename}" --force
@@ -71,18 +71,18 @@ load test_helper
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
 
-  [[ ${status} -eq 0                        ]]
-  [[ ! -e "${_NOTEBOOK_PATH}/${_filename}"  ]]
+  [[ ${status} -eq 0                    ]]
+  [[ ! -e "${NB_DIR}/home/${_filename}" ]]
 }
 
 # <scope>:<selector> ##########################################################
 
 @test "'delete <scope>:<selector>' with <filename> argument prints scoped output." {
   {
-    run "${_NB}" init
-    run "${_NB}" notebooks add "one"
-    run "${_NB}" use "one"
-    run "${_NB}" add
+    "${_NB}" init
+    "${_NB}" notebooks add "one"
+    "${_NB}" use "one"
+    "${_NB}" add
 
     _filename=$("${_NB}" list -n 1 --no-id --filenames | head -1)
 
@@ -91,7 +91,7 @@ load test_helper
     printf "home:list\\n" && "${_NB}" home:list --no-id --filenames
     printf "one:list\\n"  && "${_NB}" one:list --no-id --filenames
 
-    run "${_NB}" use "home"
+    "${_NB}" use "home"
 
     [[ -n "${_filename}"                ]]
     [[ -e "${NB_DIR}/one/${_filename}"  ]]
@@ -109,10 +109,10 @@ load test_helper
 
 @test "'<scope>:delete <selector>' with <filename> argument prints scoped output." {
   {
-    run "${_NB}" init
-    run "${_NB}" notebooks add "one"
-    run "${_NB}" use "one"
-    run "${_NB}" add
+    "${_NB}" init
+    "${_NB}" notebooks add "one"
+    "${_NB}" use "one"
+    "${_NB}" add
 
     _filename=$("${_NB}" list -n 1 --no-id --filenames | head -1)
 
@@ -121,7 +121,7 @@ load test_helper
     printf "home:list\\n" && "${_NB}" home:list --no-id --filenames
     printf "one:list\\n"  && "${_NB}" one:list --no-id --filenames
 
-    run "${_NB}" use "home"
+    "${_NB}" use "home"
 
     [[ -n "${_filename}"                ]]
     [[ -e "${NB_DIR}/one/${_filename}"  ]]
@@ -139,10 +139,10 @@ load test_helper
 
 @test "'<scope>:<selector> delete' with <filename> argument prints scoped output." {
   {
-    run "${_NB}" init
-    run "${_NB}" notebooks add "one"
-    run "${_NB}" use "one"
-    run "${_NB}" add
+    "${_NB}" init
+    "${_NB}" notebooks add "one"
+    "${_NB}" use "one"
+    "${_NB}" add
 
     _filename=$("${_NB}" list -n 1 --no-id --filenames | head -1)
 
@@ -151,7 +151,7 @@ load test_helper
     printf "home:list\\n" && "${_NB}" home:list --no-id --filenames
     printf "one:list\\n"  && "${_NB}" one:list --no-id --filenames
 
-    run "${_NB}" use "home"
+    "${_NB}" use "home"
 
     [[ -n "${_filename}"                ]]
     [[ -e "${NB_DIR}/one/${_filename}"  ]]
@@ -169,10 +169,10 @@ load test_helper
 
 @test "'<selector> <scope>:delete' with <filename> argument prints scoped output." {
   {
-    run "${_NB}" init
-    run "${_NB}" notebooks add "one"
-    run "${_NB}" use "one"
-    run "${_NB}" add
+    "${_NB}" init
+    "${_NB}" notebooks add "one"
+    "${_NB}" use "one"
+    "${_NB}" add
 
     _filename=$("${_NB}" list -n 1 --no-id --filenames | head -1)
 
@@ -181,7 +181,7 @@ load test_helper
     printf "home:list\\n" && "${_NB}" home:list --no-id --filenames
     printf "one:list\\n"  && "${_NB}" one:list --no-id --filenames
 
-    run "${_NB}" use "home"
+    "${_NB}" use "home"
 
     [[ -n "${_filename}"                ]]
     [[ -e "${NB_DIR}/one/${_filename}"  ]]
@@ -201,13 +201,13 @@ load test_helper
 
 @test "'delete' with <filename> argument deletes properly without errors." {
   {
-    run "${_NB}" init
-    run "${_NB}" add
+    "${_NB}" init
+    "${_NB}" add
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
-    _original_index="$(cat "${_NOTEBOOK_PATH}/.index")"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
+    _original_index="$(cat "${NB_DIR}/home/.index")"
 
-    [[ -e "${_NOTEBOOK_PATH}/${_filename}"  ]]
+    [[ -e "${NB_DIR}/home/${_filename}"  ]]
   }
 
   run "${_NB}" delete "${_filename}" --force
@@ -216,23 +216,23 @@ load test_helper
   printf "\${output}: '%s'\\n" "${output}"
 
   # Returns status 0
-  [[ ${status} -eq 0                        ]]
+  [[ ${status} -eq 0                      ]]
 
   # Deletes note file
-  [[ ! -e "${_NOTEBOOK_PATH}/${_filename}"  ]]
+  [[ ! -e "${NB_DIR}/home/${_filename}"   ]]
 
   # Creates git commit
-  cd "${_NOTEBOOK_PATH}" || return 1
-  while [[ -n "$(git status --porcelain)"   ]]
+  cd "${NB_DIR}/home" || return 1
+  while [[ -n "$(git status --porcelain)" ]]
   do
     sleep 1
   done
   git log | grep -q '\[nb\] Delete'
 
   # Deletes entry from index
-  [[ -e "${_NOTEBOOK_PATH}/.index"                                      ]]
-  [[ "$(ls "${_NOTEBOOK_PATH}")" == "$(cat "${_NOTEBOOK_PATH}/.index")" ]]
-  [[ "${_original_index}" != "$(cat "${_NOTEBOOK_PATH}/.index")"        ]]
+  [[ -e "${NB_DIR}/home/.index"                                   ]]
+  [[ "$(ls "${NB_DIR}/home")" == "$(cat "${NB_DIR}/home/.index")" ]]
+  [[ "${_original_index}" != "$(cat "${NB_DIR}/home/.index")"     ]]
 
   # Prints output
   [[ "${output}" =~ Deleted:        ]]
@@ -244,13 +244,13 @@ load test_helper
 
 @test "'delete <id>' deletes properly without errors." {
   {
-    run "${_NB}" init
-    run "${_NB}" add
+    "${_NB}" init
+    "${_NB}" add
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
-    _original_index="$(cat "${_NOTEBOOK_PATH}/.index")"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
+    _original_index="$(cat "${NB_DIR}/home/.index")"
 
-    [[ -e "${_NOTEBOOK_PATH}/${_filename}"  ]]
+    [[ -e "${NB_DIR}/home/${_filename}"  ]]
   }
 
   run "${_NB}" delete 1 --force
@@ -259,23 +259,23 @@ load test_helper
   printf "\${output}: '%s'\\n" "${output}"
 
   # Returns status 0
-  [[ ${status} -eq 0                        ]]
+  [[ ${status} -eq 0                      ]]
 
   # Deletes note file
-  [[ ! -e "${_NOTEBOOK_PATH}/${_filename}"  ]]
+  [[ ! -e "${NB_DIR}/home/${_filename}"   ]]
 
   # Creates git commit
-  cd "${_NOTEBOOK_PATH}" || return 1
-  while [[ -n "$(git status --porcelain)"   ]]
+  cd "${NB_DIR}/home" || return 1
+  while [[ -n "$(git status --porcelain)" ]]
   do
     sleep 1
   done
   git log | grep -q '\[nb\] Delete'
 
   # Deletes entry from index
-  [[ -e "${_NOTEBOOK_PATH}/.index"                                      ]]
-  [[ "$(ls "${_NOTEBOOK_PATH}")" == "$(cat "${_NOTEBOOK_PATH}/.index")" ]]
-  [[ "${_original_index}" != "$(cat "${_NOTEBOOK_PATH}/.index")"        ]]
+  [[ -e "${NB_DIR}/home/.index"                                   ]]
+  [[ "$(ls "${NB_DIR}/home")" == "$(cat "${NB_DIR}/home/.index")" ]]
+  [[ "${_original_index}" != "$(cat "${NB_DIR}/home/.index")"     ]]
 
   # Prints output
   [[ "${output}" =~ Deleted:        ]]
@@ -285,13 +285,13 @@ load test_helper
 
 @test "'<id> delete' with deletes properly without errors." {
   {
-    run "${_NB}" init
-    run "${_NB}" add
+    "${_NB}" init
+    "${_NB}" add
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
-    _original_index="$(cat "${_NOTEBOOK_PATH}/.index")"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
+    _original_index="$(cat "${NB_DIR}/home/.index")"
 
-    [[ -e "${_NOTEBOOK_PATH}/${_filename}"  ]]
+    [[ -e "${NB_DIR}/home/${_filename}"  ]]
   }
 
   run "${_NB}" 1 delete --force
@@ -300,23 +300,23 @@ load test_helper
   printf "\${output}: '%s'\\n" "${output}"
 
   # Returns status 0
-  [[ ${status} -eq 0                        ]]
+  [[ ${status} -eq 0                      ]]
 
   # Deletes note file
-  [[ ! -e "${_NOTEBOOK_PATH}/${_filename}"  ]]
+  [[ ! -e "${NB_DIR}/home/${_filename}"   ]]
 
   # Creates git commit
-  cd "${_NOTEBOOK_PATH}" || return 1
-  while [[ -n "$(git status --porcelain)"   ]]
+  cd "${NB_DIR}/home" || return 1
+  while [[ -n "$(git status --porcelain)" ]]
   do
     sleep 1
   done
   git log | grep -q '\[nb\] Delete'
 
   # Deletes entry from index
-  [[ -e "${_NOTEBOOK_PATH}/.index"                                      ]]
-  [[ "$(ls "${_NOTEBOOK_PATH}")" == "$(cat "${_NOTEBOOK_PATH}/.index")" ]]
-  [[ "${_original_index}" != "$(cat "${_NOTEBOOK_PATH}/.index")"        ]]
+  [[ -e "${NB_DIR}/home/.index"                                   ]]
+  [[ "$(ls "${NB_DIR}/home")" == "$(cat "${NB_DIR}/home/.index")" ]]
+  [[ "${_original_index}" != "$(cat "${NB_DIR}/home/.index")"     ]]
 
   # Prints output
   [[ "${output}" =~ Deleted:        ]]
@@ -328,38 +328,38 @@ load test_helper
 
 @test "'delete' with <path> argument deletes properly without errors." {
   {
-    run "${_NB}" init
-    run "${_NB}" add
+    "${_NB}" init
+    "${_NB}" add
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
-    _original_index="$(cat "${_NOTEBOOK_PATH}/.index")"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
+    _original_index="$(cat "${NB_DIR}/home/.index")"
 
-    [[ -e "${_NOTEBOOK_PATH}/${_filename}" ]]
+    [[ -e "${NB_DIR}/home/${_filename}" ]]
   }
 
-  run "${_NB}" delete "${_NOTEBOOK_PATH}/${_filename}" --force
+  run "${_NB}" delete "${NB_DIR}/home/${_filename}" --force
 
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
 
   # Returns status 0
-  [[ ${status} -eq 0                        ]]
+  [[ ${status} -eq 0                      ]]
 
   # Deletes note file
-  [[ ! -e "${_NOTEBOOK_PATH}/${_filename}"  ]]
+  [[ ! -e "${NB_DIR}/home/${_filename}"   ]]
 
   # Creates git commit
-  cd "${_NOTEBOOK_PATH}" || return 1
-  while [[ -n "$(git status --porcelain)"   ]]
+  cd "${NB_DIR}/home" || return 1
+  while [[ -n "$(git status --porcelain)" ]]
   do
     sleep 1
   done
   git log | grep -q '\[nb\] Delete'
 
   # Deletes entry from index
-  [[ -e "${_NOTEBOOK_PATH}/.index"                                      ]]
-  [[ "$(ls "${_NOTEBOOK_PATH}")" == "$(cat "${_NOTEBOOK_PATH}/.index")" ]]
-  [[ "${_original_index}" != "$(cat "${_NOTEBOOK_PATH}/.index")"        ]]
+  [[ -e "${NB_DIR}/home/.index"                                   ]]
+  [[ "$(ls "${NB_DIR}/home")" == "$(cat "${NB_DIR}/home/.index")" ]]
+  [[ "${_original_index}" != "$(cat "${NB_DIR}/home/.index")"     ]]
 
   # Prints output
   [[ "${output}" =~ Deleted:        ]]
@@ -371,13 +371,13 @@ load test_helper
 
 @test "'delete' with <title> argument deletes properly without errors." {
   {
-    run "${_NB}" init
-    run "${_NB}" add --title "Example Title"
+    "${_NB}" init
+    "${_NB}" add --title "Example Title"
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
-    _original_index="$(cat "${_NOTEBOOK_PATH}/.index")"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
+    _original_index="$(cat "${NB_DIR}/home/.index")"
 
-    [[ -e "${_NOTEBOOK_PATH}/${_filename}"   ]]
+    [[ -e "${NB_DIR}/home/${_filename}"   ]]
   }
 
   run "${_NB}" delete "Example Title" --force
@@ -386,23 +386,23 @@ load test_helper
   printf "\${output}: '%s'\\n" "${output}"
 
   # Returns status 0
-  [[ ${status} -eq 0                        ]]
+  [[ ${status} -eq 0                      ]]
 
   # Deletes note file
-  [[ ! -e "${_NOTEBOOK_PATH}/${_filename}"  ]]
+  [[ ! -e "${NB_DIR}/home/${_filename}"   ]]
 
   # Creates git commit
-  cd "${_NOTEBOOK_PATH}" || return 1
-  while [[ -n "$(git status --porcelain)"   ]]
+  cd "${NB_DIR}/home" || return 1
+  while [[ -n "$(git status --porcelain)" ]]
   do
     sleep 1
   done
   git log | grep -q '\[nb\] Delete'
 
   # Deletes entry from index
-  [[ -e "${_NOTEBOOK_PATH}/.index"                                      ]]
-  [[ "$(ls "${_NOTEBOOK_PATH}")" == "$(cat "${_NOTEBOOK_PATH}/.index")" ]]
-  [[ "${_original_index}" != "$(cat "${_NOTEBOOK_PATH}/.index")"        ]]
+  [[ -e "${NB_DIR}/home/.index"                                   ]]
+  [[ "$(ls "${NB_DIR}/home")" == "$(cat "${NB_DIR}/home/.index")" ]]
+  [[ "${_original_index}" != "$(cat "${NB_DIR}/home/.index")"     ]]
 
   # Prints output
   [[ "${output}" =~ Deleted:        ]]
@@ -414,13 +414,13 @@ load test_helper
 
 @test "'delete' with <folder> argument deletes properly without errors." {
   {
-    run "${_NB}" init
-    run "${_NB}" import "${BATS_TEST_DIRNAME}/fixtures/Example Folder"
+    "${_NB}" init
+    "${_NB}" import "${NB_TEST_BASE_PATH}/fixtures/Example Folder"
 
-    IFS= _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
-    _original_index="$(cat "${_NOTEBOOK_PATH}/.index")"
+    IFS= _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
+    _original_index="$(cat "${NB_DIR}/home/.index")"
 
-    [[ -e "${_NOTEBOOK_PATH}/${_filename}" ]]
+    [[ -e "${NB_DIR}/home/${_filename}" ]]
   }
 
   run "${_NB}" delete "${_filename}" --force
@@ -429,23 +429,23 @@ load test_helper
   printf "\${output}: '%s'\\n" "${output}"
 
   # Returns status 0
-  [[ ${status} -eq 0                        ]]
+  [[ ${status} -eq 0                      ]]
 
   # Deletes note file
-  [[ ! -e "${_NOTEBOOK_PATH}/${_filename}"  ]]
+  [[ ! -e "${NB_DIR}/home/${_filename}"   ]]
 
   # Creates git commit
-  cd "${_NOTEBOOK_PATH}" || return 1
-  while [[ -n "$(git status --porcelain)"   ]]
+  cd "${NB_DIR}/home" || return 1
+  while [[ -n "$(git status --porcelain)" ]]
   do
     sleep 1
   done
   git log | grep -q '\[nb\] Delete'
 
   # Deletes entry from index
-  [[ -e "${_NOTEBOOK_PATH}/.index"                                      ]]
-  [[ "$(ls "${_NOTEBOOK_PATH}")" == "$(cat "${_NOTEBOOK_PATH}/.index")" ]]
-  [[ "${_original_index}" != "$(cat "${_NOTEBOOK_PATH}/.index")"        ]]
+  [[ -e "${NB_DIR}/home/.index"                                   ]]
+  [[ "$(ls "${NB_DIR}/home")" == "$(cat "${NB_DIR}/home/.index")" ]]
+  [[ "${_original_index}" != "$(cat "${NB_DIR}/home/.index")"     ]]
 
   # Prints output
   [[ "${output}" =~ Deleted:          ]]

@@ -12,11 +12,49 @@ _setup_notebooks() {
   cd "${NB_DIR}" || return 1
 }
 
+# <name> validation ###########################################################
+
+@test "'notebooks export <reserved>' exits with 1 and prints error message." {
+  {
+    "${_NB}" init
+
+    cd "${_TMP_DIR}"
+
+    _names=(
+      ".cache"
+      ".current"
+      ".plugins"
+      ".readme"
+      "readme"
+      "readme.md"
+    )
+  }
+
+  for __name in "${_names[@]}"
+  do
+    run "${_NB}" notebooks import                     \
+      "${NB_TEST_BASE_PATH}/fixtures/Example Folder"  \
+      "${__name}"
+
+    printf "\${status}: '%s'\\n" "${status}"
+    printf "\${output}: '%s'\\n" "${output}"
+
+    ls "${NB_DIR}"
+
+    [[ ${status} -eq 1                  ]]
+    [[ "${lines[0]}" =~ Name\ reserved  ]]
+    [[ "${lines[0]}" =~ ${__name}       ]]
+
+    [[ ! "${output}" =~ "Imported"      ]]
+    "${_NB}" notebooks | grep -q -v 'example'
+  done
+}
+
 # no argument #################################################################
 
 @test "'notebooks import' with no arguments exits with status 1 and prints help." {
   {
-    run "${_NB}" init
+    "${_NB}" init
   }
 
   run "${_NB}" notebooks import
@@ -30,10 +68,10 @@ _setup_notebooks() {
 
 @test "'notebooks import' with valid directory <path> imports." {
   {
-    run "${_NB}" init
+    "${_NB}" init
   }
 
-  run "${_NB}" notebooks import "${BATS_TEST_DIRNAME}/fixtures/Example Folder"
+  run "${_NB}" notebooks import "${NB_TEST_BASE_PATH}/fixtures/Example Folder"
 
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
@@ -48,7 +86,7 @@ _setup_notebooks() {
 
 @test "'notebooks import' with relative <path> imports." {
   {
-    run "${_NB}" init
+    "${_NB}" init
 
     mkdir "${_TMP_DIR}/example"
 
@@ -72,13 +110,13 @@ _setup_notebooks() {
 
 @test "'notebooks import' with existing notebook imports with unique name." {
   {
-    run "${_NB}" init
-    run "${_NB}" notebooks add "Example Folder"
+    "${_NB}" init
+    "${_NB}" notebooks add "Example Folder"
 
     [[ -d "${NB_DIR}/Example Folder" ]]
   }
 
-  run "${_NB}" notebooks import "${BATS_TEST_DIRNAME}/fixtures/Example Folder"
+  run "${_NB}" notebooks import "${NB_TEST_BASE_PATH}/fixtures/Example Folder"
 
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
@@ -93,10 +131,10 @@ _setup_notebooks() {
 
 @test "'notebooks import' with invalid file <path> argument exits with 1." {
   {
-    run "${_NB}" init
+    "${_NB}" init
   }
 
-  run "${_NB}" notebooks import "${BATS_TEST_DIRNAME}/fixtures/example.md"
+  run "${_NB}" notebooks import "${NB_TEST_BASE_PATH}/fixtures/example.md"
 
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}
@@ -110,11 +148,11 @@ _setup_notebooks() {
 
 @test "'notebooks import' with valid <name> argument imports." {
   {
-    run "${_NB}" init
+    "${_NB}" init
   }
 
   run "${_NB}" notebooks import                     \
-    "${BATS_TEST_DIRNAME}/fixtures/Example Folder"  \
+    "${NB_TEST_BASE_PATH}/fixtures/Example Folder"  \
     "example-notebook"
 
   printf "\${status}: '%s'\\n" "${status}"
@@ -132,14 +170,14 @@ _setup_notebooks() {
 
 @test "'notebooks import' with existing notebook <name> imports with unique name." {
   {
-    run "${_NB}" init
-    run "${_NB}" notebooks add "example"
+    "${_NB}" init
+    "${_NB}" notebooks add "example"
 
     [[ -d "${NB_DIR}/example" ]]
   }
 
   run "${_NB}" notebooks import                     \
-    "${BATS_TEST_DIRNAME}/fixtures/Example Folder"  \
+    "${NB_TEST_BASE_PATH}/fixtures/Example Folder"  \
     "example"
 
   printf "\${status}: '%s'\\n" "${status}"

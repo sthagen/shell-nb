@@ -7,8 +7,11 @@
 # https://github.com/sstephenson/bats
 ###############################################################################
 
-setup() {
-  # $IFS
+# Usage: _setup [<bats-base-path>]
+_setup() {
+  export NB_TEST_BASE_PATH="${1:-"${BATS_TEST_DIRNAME}"}"
+
+# $IFS
   IFS=$'\n\t'
 
   # Allow clobber. More info:
@@ -29,31 +32,27 @@ setup() {
   # `$_NB`
   #
   # The location of the `nb` script being tested.
-  export _NB="${BATS_TEST_DIRNAME}/../nb"
-
-  # `$_NB_PATH`
-  #
-  # Used by `bookmark` and `nb` for testing.
-  export _NB_PATH="${_NB}"
+  export _NB="${NB_TEST_BASE_PATH}/../nb"
 
   # `$_BOOKMARK`
   #
   # The location of the `bookmark` script being tested.
-  export _BOOKMARK="${BATS_TEST_DIRNAME}/../bin/bookmark"
+  export _BOOKMARK="${NB_TEST_BASE_PATH}/../bin/bookmark"
 
   # `$_NOTES`
   #
   # The location of the `notes` script being tested.
-  export _NOTES="${BATS_TEST_DIRNAME}/../bin/notes"
+  export _NOTES="${NB_TEST_BASE_PATH}/../bin/notes"
+
+  # `$_NB_PATH`
+  #
+  # Used by `bookmark` and `notes` for testing.
+  export _NB_PATH="${_NB}"
 
   export _TMP_DIR
   _TMP_DIR="$(mktemp -d /tmp/nb_test.XXXXXX)" || exit 1
 
   export NB_DIR="${_TMP_DIR}/notebooks"
-
-  export NB_NOTEBOOK_PATH="${NB_DIR}/home"
-# Assign legacy $_NOTEBOOK_PATH. TODO: global search and replace.
-  export _NOTEBOOK_PATH="${NB_NOTEBOOK_PATH}"
 
   export NBRC_PATH="${_TMP_DIR}/.nbrc"
   export NB_COLOR_PRIMARY=3
@@ -62,7 +61,8 @@ setup() {
   export _GIT_REMOTE_PATH="${_TMP_DIR}/remote"
   export _GIT_REMOTE_URL="file://${_GIT_REMOTE_PATH}"
 
-  export _BOOKMARK_URL="file://${BATS_TEST_DIRNAME}/fixtures/example.com.html"
+  export _BOOKMARK_URL="file://${NB_TEST_BASE_PATH}/fixtures/example.com.html"
+  export _OG_BOOKMARK_URL="file://${NB_TEST_BASE_PATH}/fixtures/example.com-og.html"
 
   # `$_ERROR_PREFIX`
   #
@@ -72,12 +72,8 @@ setup() {
 
   if [[ -z "${EDITOR:-}" ]] || [[ ! "${EDITOR:-}" =~ mock_editor ]]
   then
-    export EDITOR="${BATS_TEST_DIRNAME}/fixtures/bin/mock_editor"
+    export EDITOR="${NB_TEST_BASE_PATH}/fixtures/bin/mock_editor"
   fi
-
-  # Use empty `nb` script in environment to avoid depending on `nb`
-  # being available in `$PATH`.
-  export PATH="${BATS_TEST_DIRNAME}/fixtures/bin:${PATH}"
 
   # $_NEWLINE
   #
@@ -85,11 +81,18 @@ setup() {
   export _NEWLINE=$'\n'
 
   if [[ ! "${NB_DIR}"         =~ ^/tmp/nb_test ]] ||
-     [[ ! "${_NOTEBOOK_PATH}" =~ ^/tmp/nb_test ]] ||
      [[ ! "${NBRC_PATH}"      =~ ^/tmp/nb_test ]]
   then
     exit 1
   fi
+}
+
+setup() {
+  _setup
+
+  # Use empty `nb` script in environment to avoid depending on `nb`
+  # being available in `$PATH`.
+  export PATH="${NB_TEST_BASE_PATH}/fixtures/bin:${PATH}"
 }
 
 teardown() {

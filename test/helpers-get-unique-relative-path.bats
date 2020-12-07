@@ -6,7 +6,7 @@ load test_helper
 
 @test "'_get_unique_relative_path()' with no arguments prints generated filename without extension." {
   {
-    run "${_NB}" init
+    "${_NB}" init
   }
 
   run "${_NB}" helpers get_unique_relative_path
@@ -21,10 +21,10 @@ load test_helper
 
 @test "'_get_unique_relative_path()' prints generated filename without extension with one-level relative path." {
   {
-    run "${_NB}" init
+    "${_NB}" init
 
-    mkdir "${_NOTEBOOK_PATH}/Example Folder"
-    touch "${_NOTEBOOK_PATH}/Example Folder/.index"
+    mkdir "${NB_DIR}/home/Example Folder"
+    touch "${NB_DIR}/home/Example Folder/.index"
   }
 
   run "${_NB}" helpers get_unique_relative_path "Example Folder/"
@@ -39,13 +39,13 @@ load test_helper
 
 @test "'_get_unique_relative_path()' prints generated filename without extension with two-level relative path." {
   {
-    run "${_NB}" init
+    "${_NB}" init
 
-    mkdir "${_NOTEBOOK_PATH}/Example Folder"
-    touch "${_NOTEBOOK_PATH}/Example Folder/.index"
+    mkdir "${NB_DIR}/home/Example Folder"
+    touch "${NB_DIR}/home/Example Folder/.index"
 
-    mkdir "${_NOTEBOOK_PATH}/Example Folder/Sample Folder"
-    touch "${_NOTEBOOK_PATH}/Example Folder/Sample Folder/.index"
+    mkdir "${NB_DIR}/home/Example Folder/Sample Folder"
+    touch "${NB_DIR}/home/Example Folder/Sample Folder/.index"
   }
 
   run "${_NB}" helpers get_unique_relative_path "Example Folder/Sample Folder/"
@@ -62,7 +62,7 @@ load test_helper
 
 @test "'_get_unique_relative_path()' prints generated filename for extension." {
   {
-    run "${_NB}" init
+    "${_NB}" init
   }
 
   run "${_NB}" helpers get_unique_relative_path ".rst"
@@ -77,28 +77,28 @@ load test_helper
 
 @test "'_get_unique_relative_path()' prints generated filename for extension with nested notebook path." {
   {
-    run "${_NB}" init
+    "${_NB}" init
 
-    mkdir -p "${_NOTEBOOK_PATH}/${_NOTEBOOK_PATH}"
-    touch "${_NOTEBOOK_PATH}/${_NOTEBOOK_PATH}/.index"
+    mkdir -p "${NB_DIR}/home/${NB_DIR}/home"
+    touch "${NB_DIR}/home/${NB_DIR}/home/.index"
   }
 
-  run "${_NB}" helpers get_unique_relative_path "${_NOTEBOOK_PATH}/.rst"
+  run "${_NB}" helpers get_unique_relative_path "${NB_DIR}/home/.rst"
 
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
   printf "\${#lines[@]}: '%s'\\n" "${#lines[@]}"
 
   [[ ${status} -eq 0                                ]]
-  [[ "${lines[0]}" =~ ${_NOTEBOOK_PATH}/[0-9]+.rst  ]]
+  [[ "${lines[0]}" =~ ${NB_DIR}/home/[0-9]+.rst  ]]
 }
 
 @test "'_get_unique_relative_path()' prints generated filename for extension with one-level relative path." {
   {
-    run "${_NB}" init
+    "${_NB}" init
 
-    mkdir "${_NOTEBOOK_PATH}/Example Folder"
-    touch "${_NOTEBOOK_PATH}/Example Folder/.index"
+    mkdir "${NB_DIR}/home/Example Folder"
+    touch "${NB_DIR}/home/Example Folder/.index"
   }
 
   run "${_NB}" helpers get_unique_relative_path "Example Folder/.rst"
@@ -113,13 +113,13 @@ load test_helper
 
 @test "'_get_unique_relative_path()' prints generated filename for extension with two-level relative path." {
   {
-    run "${_NB}" init
+    "${_NB}" init
 
-    mkdir "${_NOTEBOOK_PATH}/Example Folder"
-    touch "${_NOTEBOOK_PATH}/Example Folder/.index"
+    mkdir "${NB_DIR}/home/Example Folder"
+    touch "${NB_DIR}/home/Example Folder/.index"
 
-    mkdir "${_NOTEBOOK_PATH}/Example Folder/Sample Folder"
-    touch "${_NOTEBOOK_PATH}/Example Folder/Sample Folder/.index"
+    mkdir "${NB_DIR}/home/Example Folder/Sample Folder"
+    touch "${NB_DIR}/home/Example Folder/Sample Folder/.index"
   }
 
   run "${_NB}" helpers get_unique_relative_path "Example Folder/Sample Folder/.rst"
@@ -136,13 +136,13 @@ load test_helper
 
 @test "'_get_unique_relative_path()' prints one-level file path." {
   {
-    run "${_NB}" init
+    "${_NB}" init
 
-    mkdir "${_NOTEBOOK_PATH}/Example Folder"
-    touch "${_NOTEBOOK_PATH}/Example Folder/example.txt"
+    mkdir "${NB_DIR}/home/Example Folder"
+    touch "${NB_DIR}/home/Example Folder/example.txt"
 
-    [[ -d "${_NOTEBOOK_PATH}/Example Folder"              ]]
-    [[ -f "${_NOTEBOOK_PATH}/Example Folder/example.txt"  ]]
+    [[ -d "${NB_DIR}/home/Example Folder"              ]]
+    [[ -f "${NB_DIR}/home/Example Folder/example.txt"  ]]
 
     run "${_NB}" list
 
@@ -169,12 +169,12 @@ load test_helper
 
 @test "'_get_unique_relative_path()' prints one-level folder path." {
   {
-    run "${_NB}" init
+    "${_NB}" init
 
-    mkdir "${_NOTEBOOK_PATH}/Example Folder"
-    touch "${_NOTEBOOK_PATH}/Example Folder/.index"
+    mkdir "${NB_DIR}/home/Example Folder"
+    touch "${NB_DIR}/home/Example Folder/.index"
 
-    [[ -d "${_NOTEBOOK_PATH}/Example Folder" ]]
+    [[ -d "${NB_DIR}/home/Example Folder" ]]
 
     run "${_NB}" list
 
@@ -201,17 +201,17 @@ load test_helper
 
 @test "'_get_unique_relative_path()' prints two-level file path." {
   {
-    run "${_NB}" init
+    "${_NB}" init
 
-    mkdir "${_NOTEBOOK_PATH}/Example Folder"
-    touch "${_NOTEBOOK_PATH}/Example Folder/.index"
+    mkdir "${NB_DIR}/home/Example Folder"
+    touch "${NB_DIR}/home/Example Folder/.index"
 
-    mkdir "${_NOTEBOOK_PATH}/Example Folder/Sample Folder"
-    touch "${_NOTEBOOK_PATH}/Example Folder/Sample Folder/example.txt"
+    mkdir "${NB_DIR}/home/Example Folder/Sample Folder"
+    touch "${NB_DIR}/home/Example Folder/Sample Folder/example.txt"
 
-    [[ -d "${_NOTEBOOK_PATH}/Example Folder"                            ]]
-    [[ -d "${_NOTEBOOK_PATH}/Example Folder/Sample Folder"              ]]
-    [[ -f "${_NOTEBOOK_PATH}/Example Folder/Sample Folder/example.txt"  ]]
+    [[ -d "${NB_DIR}/home/Example Folder"                            ]]
+    [[ -d "${NB_DIR}/home/Example Folder/Sample Folder"              ]]
+    [[ -f "${NB_DIR}/home/Example Folder/Sample Folder/example.txt"  ]]
 
     run "${_NB}" list
 
@@ -239,19 +239,19 @@ load test_helper
 
 @test "'_get_unique_relative_path()' prints two-level folder path." {
   {
-    run "${_NB}" init
+    "${_NB}" init
 
-    mkdir "${_NOTEBOOK_PATH}/Example Folder"
-    touch "${_NOTEBOOK_PATH}/Example Folder/.index"
+    mkdir "${NB_DIR}/home/Example Folder"
+    touch "${NB_DIR}/home/Example Folder/.index"
 
-    mkdir "${_NOTEBOOK_PATH}/Example Folder/Sample Folder"
-    touch "${_NOTEBOOK_PATH}/Example Folder/Sample Folder/.index"
-    touch "${_NOTEBOOK_PATH}/Example Folder/Sample Folder/example.txt"
+    mkdir "${NB_DIR}/home/Example Folder/Sample Folder"
+    touch "${NB_DIR}/home/Example Folder/Sample Folder/.index"
+    touch "${NB_DIR}/home/Example Folder/Sample Folder/example.txt"
 
-    [[ -d "${_NOTEBOOK_PATH}/Example Folder"                            ]]
-    [[ -d "${_NOTEBOOK_PATH}/Example Folder/Sample Folder"              ]]
-    [[ -f "${_NOTEBOOK_PATH}/Example Folder/Sample Folder/.index"       ]]
-    [[ -f "${_NOTEBOOK_PATH}/Example Folder/Sample Folder/example.txt"  ]]
+    [[ -d "${NB_DIR}/home/Example Folder"                            ]]
+    [[ -d "${NB_DIR}/home/Example Folder/Sample Folder"              ]]
+    [[ -f "${NB_DIR}/home/Example Folder/Sample Folder/.index"       ]]
+    [[ -f "${NB_DIR}/home/Example Folder/Sample Folder/example.txt"  ]]
 
     run "${_NB}" list
 
@@ -278,21 +278,21 @@ load test_helper
 
 @test "'_get_unique_relative_path()' prints three-level file path." {
   {
-    run "${_NB}" init
+    "${_NB}" init
 
-    mkdir "${_NOTEBOOK_PATH}/Example Folder"
-    touch "${_NOTEBOOK_PATH}/Example Folder/.index"
+    mkdir "${NB_DIR}/home/Example Folder"
+    touch "${NB_DIR}/home/Example Folder/.index"
 
-    mkdir "${_NOTEBOOK_PATH}/Example Folder/Sample Folder"
-    touch "${_NOTEBOOK_PATH}/Example Folder/Sample Folder/.index"
+    mkdir "${NB_DIR}/home/Example Folder/Sample Folder"
+    touch "${NB_DIR}/home/Example Folder/Sample Folder/.index"
 
-    mkdir "${_NOTEBOOK_PATH}/Example Folder/Sample Folder/Demo Folder"
-    touch "${_NOTEBOOK_PATH}/Example Folder/Sample Folder/Demo Folder/example.txt"
+    mkdir "${NB_DIR}/home/Example Folder/Sample Folder/Demo Folder"
+    touch "${NB_DIR}/home/Example Folder/Sample Folder/Demo Folder/example.txt"
 
-    [[ -d "${_NOTEBOOK_PATH}/Example Folder"                                        ]]
-    [[ -d "${_NOTEBOOK_PATH}/Example Folder/Sample Folder"                          ]]
-    [[ -d "${_NOTEBOOK_PATH}/Example Folder/Sample Folder/Demo Folder"              ]]
-    [[ -f "${_NOTEBOOK_PATH}/Example Folder/Sample Folder/Demo Folder/example.txt"  ]]
+    [[ -d "${NB_DIR}/home/Example Folder"                                        ]]
+    [[ -d "${NB_DIR}/home/Example Folder/Sample Folder"                          ]]
+    [[ -d "${NB_DIR}/home/Example Folder/Sample Folder/Demo Folder"              ]]
+    [[ -f "${NB_DIR}/home/Example Folder/Sample Folder/Demo Folder/example.txt"  ]]
 
     run "${_NB}" list
 
@@ -320,26 +320,26 @@ load test_helper
 
 @test "'_get_unique_relative_path()' prints three-level folder path." {
   {
-    run "${_NB}" init
+    "${_NB}" init
 
-    mkdir "${_NOTEBOOK_PATH}/Example Folder"
-    touch "${_NOTEBOOK_PATH}/Example Folder/.index"
+    mkdir "${NB_DIR}/home/Example Folder"
+    touch "${NB_DIR}/home/Example Folder/.index"
 
-    mkdir "${_NOTEBOOK_PATH}/Example Folder/Sample Folder"
-    touch "${_NOTEBOOK_PATH}/Example Folder/Sample Folder/.index"
+    mkdir "${NB_DIR}/home/Example Folder/Sample Folder"
+    touch "${NB_DIR}/home/Example Folder/Sample Folder/.index"
 
-    mkdir "${_NOTEBOOK_PATH}/Example Folder/Sample Folder/Demo Folder"
-    touch "${_NOTEBOOK_PATH}/Example Folder/Sample Folder/Demo Folder/.index"
-    touch "${_NOTEBOOK_PATH}/Example Folder/Sample Folder/Demo Folder/example.txt"
+    mkdir "${NB_DIR}/home/Example Folder/Sample Folder/Demo Folder"
+    touch "${NB_DIR}/home/Example Folder/Sample Folder/Demo Folder/.index"
+    touch "${NB_DIR}/home/Example Folder/Sample Folder/Demo Folder/example.txt"
 
-    [[ -d "${_NOTEBOOK_PATH}/Example Folder"                                        ]]
+    [[ -d "${NB_DIR}/home/Example Folder"                                        ]]
 
-    [[ -d "${_NOTEBOOK_PATH}/Example Folder/Sample Folder"                          ]]
-    [[ -f "${_NOTEBOOK_PATH}/Example Folder/Sample Folder/.index"                   ]]
+    [[ -d "${NB_DIR}/home/Example Folder/Sample Folder"                          ]]
+    [[ -f "${NB_DIR}/home/Example Folder/Sample Folder/.index"                   ]]
 
-    [[ -d "${_NOTEBOOK_PATH}/Example Folder/Sample Folder/Demo Folder"              ]]
-    [[ -f "${_NOTEBOOK_PATH}/Example Folder/Sample Folder/Demo Folder/.index"       ]]
-    [[ -f "${_NOTEBOOK_PATH}/Example Folder/Sample Folder/Demo Folder/example.txt"  ]]
+    [[ -d "${NB_DIR}/home/Example Folder/Sample Folder/Demo Folder"              ]]
+    [[ -f "${NB_DIR}/home/Example Folder/Sample Folder/Demo Folder/.index"       ]]
+    [[ -f "${NB_DIR}/home/Example Folder/Sample Folder/Demo Folder/example.txt"  ]]
 
     run "${_NB}" list
 

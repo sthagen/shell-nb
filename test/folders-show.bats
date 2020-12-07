@@ -2,26 +2,26 @@
 
 load test_helper
 
-# show <path-with-folder> --relative-path ###################################o##
+# show <path-with-folder> --relative-path #####################################
 
 @test "'show folder/folder/<title> --relative-path' displays relative path." {
   {
-    run "${_NB}" init
+    "${_NB}" init
 
-    run "${_NB}" add "Example Folder/Sample Folder/example.bookmark.md" \
-      --content "<https://example.test>"                                \
+    "${_NB}" add "Example Folder/Sample Folder/example.bookmark.md" \
+      --content "<https://example.test>"                            \
       --title   "Example Title"
 
-    [[ -d "${_NOTEBOOK_PATH}/Example Folder"                                    ]]
-    [[ -d "${_NOTEBOOK_PATH}/Example Folder/Sample Folder"                      ]]
-    [[ -f "${_NOTEBOOK_PATH}/Example Folder/Sample Folder/example.bookmark.md"  ]]
+    [[ -d "${NB_DIR}/home/Example Folder"                                    ]]
+    [[ -d "${NB_DIR}/home/Example Folder/Sample Folder"                      ]]
+    [[ -f "${NB_DIR}/home/Example Folder/Sample Folder/example.bookmark.md"  ]]
   }
 
   run "${_NB}" show "Example Folder/Sample Folder/Example Title" --relative-path
 
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
-  ls "${_NOTEBOOK_PATH}/Example Folder/Sample Folder/"
+  ls "${NB_DIR}/home/Example Folder/Sample Folder/"
 
   [[ ${status}    -eq 0                                                   ]]
   [[ "${output}"  =~ ^Example\ Folder/Sample\ Folder/example.bookmark.md  ]]
@@ -29,22 +29,22 @@ load test_helper
 
 @test "'show folder/folder/<filename> --relative-path' displays relative path." {
   {
-    run "${_NB}" init
+    "${_NB}" init
 
-    run "${_NB}" add "Example Folder/Sample Folder/example.bookmark.md" \
-      --content "<https://example.test>"                                \
+    "${_NB}" add "Example Folder/Sample Folder/example.bookmark.md" \
+      --content "<https://example.test>"                            \
       --title   "Example Title"
 
-    [[ -d "${_NOTEBOOK_PATH}/Example Folder"                                    ]]
-    [[ -d "${_NOTEBOOK_PATH}/Example Folder/Sample Folder"                      ]]
-    [[ -f "${_NOTEBOOK_PATH}/Example Folder/Sample Folder/example.bookmark.md"  ]]
+    [[ -d "${NB_DIR}/home/Example Folder"                                    ]]
+    [[ -d "${NB_DIR}/home/Example Folder/Sample Folder"                      ]]
+    [[ -f "${NB_DIR}/home/Example Folder/Sample Folder/example.bookmark.md"  ]]
   }
 
   run "${_NB}" show "Example Folder/Sample Folder/example.bookmark.md" --relative-path
 
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
-  ls "${_NOTEBOOK_PATH}/Example Folder/Sample Folder/"
+  ls "${NB_DIR}/home/Example Folder/Sample Folder/"
 
   [[ ${status}    -eq 0                                                   ]]
   [[ "${output}"  =~ ^Example\ Folder/Sample\ Folder/example.bookmark.md  ]]
@@ -52,15 +52,15 @@ load test_helper
 
 @test "'show folder/folder/<id> --relative-path' displays relative path." {
   {
-    run "${_NB}" init
+    "${_NB}" init
 
-    run "${_NB}" add "Example Folder/Sample Folder/example.bookmark.md" \
-      --content "<https://example.test>"                                \
+    "${_NB}" add "Example Folder/Sample Folder/example.bookmark.md" \
+      --content "<https://example.test>"                            \
       --title   "Example Title"
 
-    [[ -d "${_NOTEBOOK_PATH}/Example Folder"                                    ]]
-    [[ -d "${_NOTEBOOK_PATH}/Example Folder/Sample Folder"                      ]]
-    [[ -f "${_NOTEBOOK_PATH}/Example Folder/Sample Folder/example.bookmark.md"  ]]
+    [[ -d "${NB_DIR}/home/Example Folder"                                    ]]
+    [[ -d "${NB_DIR}/home/Example Folder/Sample Folder"                      ]]
+    [[ -f "${NB_DIR}/home/Example Folder/Sample Folder/example.bookmark.md"  ]]
   }
 
   run "${_NB}" show "Example Folder/Sample Folder/1" --relative-path
@@ -70,8 +70,9 @@ load test_helper
   _example_selector="Example Folder/Sample Folder/1"
   printf "'%s'\\n" "${_example_selector%\/*}"
   printf "'%s'\\n" "${_example_selector##*\/}"
-  _INDEX_FOLDER_PATH="${_NOTEBOOK_PATH}/${_example_selector%\/*}" \
-    "${_NB}" index get_basename "${_example_selector##*\/}"
+  "${_NB}" index get_basename   \
+    "${_example_selector##*\/}" \
+    "${NB_DIR}/home/${_example_selector%\/*}"
 
   [[ ${status}    -eq 0                                                   ]]
   [[ "${output}"  =~ ^Example\ Folder/Sample\ Folder/example.bookmark.md  ]]
@@ -79,12 +80,12 @@ load test_helper
 
 @test "'show notebook:folder/folder/<id> --relative-path' displays relative path." {
   {
-    run "${_NB}" init
+    "${_NB}" init
 
-    run "${_NB}" notebooks add "one"
+    "${_NB}" notebooks add "one"
 
-    run "${_NB}" one:add "Example Folder/Sample Folder/example.bookmark.md" \
-      --content "<https://example.test>"                                    \
+    "${_NB}" one:add "Example Folder/Sample Folder/example.bookmark.md" \
+      --content "<https://example.test>"                                \
       --title   "Example Title"
 
     [[ -d "${NB_DIR}/one/Example Folder"                                    ]]
@@ -105,22 +106,22 @@ load test_helper
 
 @test "'show folder/folder/<filename> --info-line' displays info line." {
   {
-    run "${_NB}" init
+    "${_NB}" init
 
-    run "${_NB}" add "Example Folder/Sample Folder/example.bookmark.md" \
-      --content "<https://example.test>"                                \
+    "${_NB}" add "Example Folder/Sample Folder/example.bookmark.md" \
+      --content "<https://example.test>"                            \
       --title   "Example Title"
 
-    [[ -d "${_NOTEBOOK_PATH}/Example Folder"                                    ]]
-    [[ -d "${_NOTEBOOK_PATH}/Example Folder/Sample Folder"                      ]]
-    [[ -f "${_NOTEBOOK_PATH}/Example Folder/Sample Folder/example.bookmark.md"  ]]
+    [[ -d "${NB_DIR}/home/Example Folder"                                    ]]
+    [[ -d "${NB_DIR}/home/Example Folder/Sample Folder"                      ]]
+    [[ -f "${NB_DIR}/home/Example Folder/Sample Folder/example.bookmark.md"  ]]
   }
 
   run "${_NB}" show "Example Folder/Sample Folder/1" --info-line
 
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
-  ls "${_NOTEBOOK_PATH}/Example Folder/Sample Folder/"
+  ls "${NB_DIR}/home/Example Folder/Sample Folder/"
 
   [[   ${status}      -eq 0                                                       ]]
   [[   "${output}"    =~  1                                                       ]]
@@ -133,18 +134,18 @@ load test_helper
 
 @test "'show notebook:folder/folder/<filename> --info-line' displays info line." {
   {
-    run "${_NB}" init
+    "${_NB}" init
 
-    run "${_NB}" add "Example Folder/Sample Folder/example.bookmark.md" \
-      --content "<https://example.test>"                                \
+    "${_NB}" add "Example Folder/Sample Folder/example.bookmark.md" \
+      --content "<https://example.test>"                            \
       --title   "Example Title"
 
-    [[ -d "${_NOTEBOOK_PATH}/Example Folder"                                    ]]
-    [[ -d "${_NOTEBOOK_PATH}/Example Folder/Sample Folder"                      ]]
-    [[ -f "${_NOTEBOOK_PATH}/Example Folder/Sample Folder/example.bookmark.md"  ]]
+    [[ -d "${NB_DIR}/home/Example Folder"                                    ]]
+    [[ -d "${NB_DIR}/home/Example Folder/Sample Folder"                      ]]
+    [[ -f "${NB_DIR}/home/Example Folder/Sample Folder/example.bookmark.md"  ]]
 
-    run "${_NB}" notebooks add "one"
-    run "${_NB}" use "one"
+    "${_NB}" notebooks add "one"
+    "${_NB}" use "one"
 
     [[ "$("${_NB}" notebooks current)" == "one" ]]
   }
@@ -153,7 +154,7 @@ load test_helper
 
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
-  ls "${_NOTEBOOK_PATH}/Example Folder/Sample Folder/"
+  ls "${NB_DIR}/home/Example Folder/Sample Folder/"
 
   [[ ${status}      -eq 0                                                       ]]
   [[ "${output}"    =~  1                                                       ]]
@@ -167,15 +168,15 @@ load test_helper
 
 @test "'show folder/folder/<filename> --selector-id' displays selector id." {
   {
-    run "${_NB}" init
+    "${_NB}" init
 
-    run "${_NB}" add "Example Folder/Sample Folder/example.bookmark.md" \
-      --content "<https://example.test>"                                \
+    "${_NB}" add "Example Folder/Sample Folder/example.bookmark.md" \
+      --content "<https://example.test>"                            \
       --title   "Example Title"
 
-    [[ -d "${_NOTEBOOK_PATH}/Example Folder"                                    ]]
-    [[ -d "${_NOTEBOOK_PATH}/Example Folder/Sample Folder"                      ]]
-    [[ -f "${_NOTEBOOK_PATH}/Example Folder/Sample Folder/example.bookmark.md"  ]]
+    [[ -d "${NB_DIR}/home/Example Folder"                                    ]]
+    [[ -d "${NB_DIR}/home/Example Folder/Sample Folder"                      ]]
+    [[ -f "${NB_DIR}/home/Example Folder/Sample Folder/example.bookmark.md"  ]]
   }
 
   run "${_NB}" show "Example Folder/Sample Folder/example.md" --selector-id
@@ -189,15 +190,15 @@ load test_helper
 
 @test "'show demo:folder/folder/<filename> --selector-id' displays selector id." {
   {
-    run "${_NB}" init
+    "${_NB}" init
 
-    run "${_NB}" add "Example Folder/Sample Folder/example.bookmark.md" \
-      --content "<https://example.test>"                                \
+    "${_NB}" add "Example Folder/Sample Folder/example.bookmark.md" \
+      --content "<https://example.test>"                            \
       --title   "Example Title"
 
-    [[ -d "${_NOTEBOOK_PATH}/Example Folder"                                    ]]
-    [[ -d "${_NOTEBOOK_PATH}/Example Folder/Sample Folder"                      ]]
-    [[ -f "${_NOTEBOOK_PATH}/Example Folder/Sample Folder/example.bookmark.md"  ]]
+    [[ -d "${NB_DIR}/home/Example Folder"                                    ]]
+    [[ -d "${NB_DIR}/home/Example Folder/Sample Folder"                      ]]
+    [[ -f "${NB_DIR}/home/Example Folder/Sample Folder/example.bookmark.md"  ]]
   }
 
   run "${_NB}" show "demo:Example Folder/Sample Folder/example.md" --selector-id

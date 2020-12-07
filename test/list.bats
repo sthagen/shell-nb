@@ -6,7 +6,7 @@ load test_helper
 
 @test "'list' (empty) exits with 0 and lists files." {
   {
-    run "${_NB}" init
+    "${_NB}" init
   }
 
   run "${_NB}" list
@@ -37,7 +37,7 @@ Help information:
     "${_NB}" add "one.md" --title "one"
     "${_NB}" add "two.md" --title "two"
     "${_NB}" add "three.md" --title "three"
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" list
@@ -58,7 +58,7 @@ Help information:
     "${_NB}" add "one.bookmark.md" --content "<https://example.com>"
     "${_NB}" add "two.md" --content "Example Content."
     "${_NB}" add "three.md" --title "Three" --encrypt --password=example
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" list
@@ -84,10 +84,10 @@ Help information:
     "${_NB}" add "four.md" --title "four"
     "${_NB}" add "five.md" --title "five"
 
-    run "${_NB}" delete "one.md" --force
-    run "${_NB}" delete "four.md" --force
+    "${_NB}" delete "one.md" --force
+    "${_NB}" delete "four.md" --force
 
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" list
@@ -114,7 +114,7 @@ Help information:
     "${_NB}" add "one.md" --title "one"
     "${_NB}" add "two.md" --title "two"
     "${_NB}" add "three.md" --title "three"
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" list --no-id
@@ -137,7 +137,7 @@ Help information:
     "${_NB}" add "one.md" --title "one"
     "${_NB}" add "two.md" --title "two"
     "${_NB}" add "three.md" --title "three"
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" list --no-color
@@ -179,7 +179,7 @@ HEREDOC
 @test "'list -e' exits with 0 and displays 5 line list items." {
   {
     _setup_list_excerpt
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" list -e
@@ -195,7 +195,7 @@ HEREDOC
 @test "'list -e 2' exits with 0 and displays 4 line list items." {
   {
     _setup_list_excerpt
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" list -e 2
@@ -211,7 +211,7 @@ HEREDOC
 @test "'list -e 0' exits with 0 and displays 1 line list items." {
   {
     _setup_list_excerpt
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" list -e 0
@@ -227,7 +227,7 @@ HEREDOC
 @test "'list --excerpt' exits with 0 and displays 5 line list items." {
   {
     _setup_list_excerpt
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" list --excerpt
@@ -243,7 +243,7 @@ HEREDOC
 @test "'list --excerpt 2' exits with 0 and displays 4 line list items." {
   {
     _setup_list_excerpt
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" list --excerpt 2
@@ -259,7 +259,7 @@ HEREDOC
 @test "'list --excerpt 0' exits with 0 and displays 1 line list items." {
   {
     _setup_list_excerpt
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" list --excerpt 0
@@ -299,7 +299,7 @@ HEREDOC
 @test "'list -n' exits with 0 and displays full list." {
   {
     _setup_list_limit
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" list -n
@@ -315,7 +315,7 @@ HEREDOC
 @test "'list -n 2' exits with 0 and displays list with 2 items." {
   {
     _setup_list_limit
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" list -n 2
@@ -332,7 +332,7 @@ HEREDOC
 @test "'list --limit 2' exits with 0 and displays list with 2 items." {
   {
     _setup_list_limit
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" list --limit 2
@@ -350,7 +350,7 @@ HEREDOC
 @test "'list --2' exits with 0 and displays list with 2 items." {
   {
     _setup_list_limit
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" list --2
@@ -388,7 +388,7 @@ line two
 line three
 line four
 HEREDOC
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" list --titles
@@ -429,7 +429,7 @@ line two
 line three
 line four
 HEREDOC
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" list --filenames
@@ -467,7 +467,7 @@ line two
 line three
 line four
 HEREDOC
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" list --paths
@@ -475,17 +475,138 @@ HEREDOC
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
   printf "\${#lines[@]}: '%s'\\n" "${#lines[@]}"
-  printf "\${NB_NOTEBOOK_PATH}: '%s'\\n" "${NB_NOTEBOOK_PATH}"
+  printf "\${NB_DIR}/home: '%s'\\n" "${NB_DIR}/home"
 
   [[ ${status} -eq 0            ]]
   [[ "${lines[0]}" =~ third.md  ]] && [[ "${lines[0]}" =~ 3 ]]
-  [[ "${lines[0]}" =~ ${NB_NOTEBOOK_PATH}                   ]]
+  [[ "${lines[0]}" =~ ${NB_DIR}/home                        ]]
 
   [[ "${lines[1]}" =~ second.md ]] && [[ "${lines[1]}" =~ 2 ]]
-  [[ "${lines[1]}" =~ ${NB_NOTEBOOK_PATH}                   ]]
+  [[ "${lines[1]}" =~ ${NB_DIR}/home                        ]]
 
   [[ "${lines[2]}" =~ first.md  ]] && [[ "${lines[2]}" =~ 1 ]]
-  [[ "${lines[2]}" =~ ${NB_NOTEBOOK_PATH}                   ]]
+  [[ "${lines[2]}" =~ ${NB_DIR}/home                        ]]
+}
+
+# `ls -s` / `ls --sort` / `ls -r` / `ls --reverse` ############################
+
+@test "'list --sort' sorts items." {
+  {
+    "${_NB}" init
+    cat <<HEREDOC | "${_NB}" add "first-home.md"
+# title one
+line two
+line three
+line four
+HEREDOC
+    cat <<HEREDOC | "${_NB}" add "second-home.md"
+# title two
+line two
+line three
+line four
+HEREDOC
+    cat <<HEREDOC | "${_NB}" add "third-example.md"
+# title three
+line two
+line three
+line four
+HEREDOC
+  }
+
+  run "${_NB}" list --sort
+
+  printf "\${status}: '%s'\\n" "${status}"
+  printf "\${output}: '%s'\\n" "${output}"
+  printf "\${#lines[@]}: '%s'\\n" "${#lines[@]}"
+
+  [[ ${status} -eq 0                ]]
+  [[ "${#lines[@]}" -eq 3           ]]
+  [[ "${lines[0]}" =~ title\ one    ]]
+  [[ "${lines[0]}" =~ [*1*]         ]]
+  [[ "${lines[1]}" =~ title\ two    ]]
+  [[ "${lines[1]}" =~ [*2*]         ]]
+  [[ "${lines[2]}" =~ title\ three  ]]
+  [[ "${lines[2]}" =~ [*3*]         ]]
+}
+
+@test "'list --sort --reverse' reverse sorts items." {
+  {
+    "${_NB}" init
+    cat <<HEREDOC | "${_NB}" add "first-home.md"
+# title one
+line two
+line three
+line four
+HEREDOC
+    cat <<HEREDOC | "${_NB}" add "second-home.md"
+# title two
+line two
+line three
+line four
+HEREDOC
+    cat <<HEREDOC | "${_NB}" add "third-example.md"
+# title three
+line two
+line three
+line four
+HEREDOC
+  }
+
+  run "${_NB}" list --sort --reverse
+
+  printf "\${status}: '%s'\\n" "${status}"
+  printf "\${output}: '%s'\\n" "${output}"
+  printf "\${#lines[@]}: '%s'\\n" "${#lines[@]}"
+
+  [[ ${status} -eq 0                ]]
+  [[ "${#lines[@]}" -eq 3           ]]
+  [[ "${lines[0]}" =~ title\ three  ]]
+  [[ "${lines[0]}" =~ [*3*]         ]]
+  [[ "${lines[1]}" =~ title\ two    ]]
+  [[ "${lines[1]}" =~ [*2*]         ]]
+  [[ "${lines[2]}" =~ title\ one    ]]
+  [[ "${lines[2]}" =~ [*1*]         ]]
+}
+
+@test "'list --sort' is not affected by NB_LIMIT." {
+  {
+    "${_NB}" init
+    cat <<HEREDOC | "${_NB}" add "first-home.md"
+# title one
+line two
+line three
+line four
+HEREDOC
+    cat <<HEREDOC | "${_NB}" add "second-home.md"
+# title two
+line two
+line three
+line four
+HEREDOC
+    cat <<HEREDOC | "${_NB}" add "third-example.md"
+# title three
+line two
+line three
+line four
+HEREDOC
+
+  "${_NB}" set limit 2
+  }
+
+  run "${_NB}" list --sort
+
+  printf "\${status}: '%s'\\n" "${status}"
+  printf "\${output}: '%s'\\n" "${output}"
+  printf "\${#lines[@]}: '%s'\\n" "${#lines[@]}"
+
+  [[ ${status} -eq 0                        ]]
+  [[ "${#lines[@]}" -eq 3                   ]]
+  [[ "${lines[0]}" =~ title\ one            ]]
+  [[ "${lines[0]}" =~ [*1*]                 ]]
+  [[ "${lines[1]}" =~ title\ two            ]]
+  [[ "${lines[1]}" =~ [*2*]                 ]]
+  [[ "${lines[2]}" =~ title\ three          ]]
+  [[ "${lines[2]}" =~ [*3*]                 ]]
 }
 
 # `list --bookmarks` ##########################################################
@@ -513,7 +634,7 @@ line two
 line three
 line four
 HEREDOC
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" list --bookmarks
@@ -550,7 +671,7 @@ line two
 line three
 line four
 HEREDOC
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" list --document
@@ -586,7 +707,7 @@ line two
 line three
 line four
 HEREDOC
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" list --documents
@@ -616,7 +737,7 @@ line two
 line three
 line four
 HEREDOC
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" list --document
@@ -646,7 +767,7 @@ line two
 line three
 line four
 HEREDOC
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" list --documents
@@ -675,7 +796,7 @@ line two
 line three
 line four
 HEREDOC
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" list --js
@@ -716,7 +837,7 @@ line two
 line three
 line four
 HEREDOC
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" list example --document
@@ -758,7 +879,7 @@ line two
 line three
 line four
 HEREDOC
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" list example --not-valid
@@ -802,7 +923,7 @@ line two
 line three
 line four
 HEREDOC
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" list matchless-query --document
@@ -842,7 +963,7 @@ line two
 line three
 line four
 HEREDOC
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" list 1 --filenames
@@ -879,7 +1000,7 @@ line two
 line three
 line four
 HEREDOC
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" list 'r' --filenames
@@ -919,7 +1040,7 @@ line two
 line three
 line four
 HEREDOC
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" list 'r' --filenames --limit 1
@@ -963,7 +1084,7 @@ line two
 line three
 line four
 HEREDOC
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" list 'r' --filenames --limit 1
@@ -1006,7 +1127,7 @@ line two
 line three
 line four
 HEREDOC
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" list 'example plum' --filenames
@@ -1048,7 +1169,7 @@ line two
 line three
 line four
 HEREDOC
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" list example plum --filenames
@@ -1077,7 +1198,7 @@ line three
 line four
 HEREDOC
     sleep 1
-    _files=($(ls "${NB_NOTEBOOK_PATH}/"))
+    _files=($(ls "${NB_DIR}/home/"))
   }
 
   run "${_NB}" list invalid

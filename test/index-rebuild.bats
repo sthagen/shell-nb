@@ -13,9 +13,9 @@ load test_helper
 
     "${_NB}" edit "second.md" --content "New conent."
 
-    echo "" > "${_NOTEBOOK_PATH}/.index"
+    echo "" > "${NB_DIR}/home/.index"
 
-    [[ "$(cat "${_NOTEBOOK_PATH}/.index")" == "" ]]
+    [[ "$(cat "${NB_DIR}/home/.index")" == "" ]]
   }
 
   run "${_NB}" index rebuild
@@ -23,26 +23,26 @@ load test_helper
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
 
-  ls -t -r "${_NOTEBOOK_PATH}"
+  ls -t -r "${NB_DIR}/home"
 
-  [[ ${status} -eq 0                                                          ]]
-  [[ "$(cat "${_NOTEBOOK_PATH}/.index")" == "$(ls -t -r "${_NOTEBOOK_PATH}")" ]]
+  [[ ${status} -eq 0                                                    ]]
+  [[ "$(cat "${NB_DIR}/home/.index")" == "$(ls -t -r "${NB_DIR}/home")" ]]
 }
 
 @test "'index rebuild' creates git commit." {
   {
-    run "${_NB}" init
-    run "${_NB}" add
+    "${_NB}" init
+    "${_NB}" add
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
 
-    run "${_NB}" delete "${_filename}" --force
-    run "${_NB}" add
+    "${_NB}" delete "${_filename}" --force
+    "${_NB}" add
   }
 
   run "${_NB}" index rebuild
 
-  cd "${_NOTEBOOK_PATH}" || return 1
+  cd "${NB_DIR}/home" || return 1
   printf "\$(git log): '%s'\n" "$(git log)"
   while [[ -n "$(git status --porcelain)" ]]
   do
@@ -53,17 +53,17 @@ load test_helper
 
 @test "'index rebuild' with no index creates git commit with operation-specific message." {
   {
-    run "${_NB}" init
-    run "${_NB}" notebooks add one
-    run "${_NB}" use one
-    run "${_NB}" add --filename "example.md"
+    "${_NB}" init
+    "${_NB}" notebooks add one
+    "${_NB}" use one
+    "${_NB}" add --filename "example.md"
 
     [[   -e "${NB_DIR:?}/one/.index"      ]]
     [[   -e "${NB_DIR:?}/one/example.md"  ]]
 
     rm "${NB_DIR:?}/one/.index"
 
-    run "${_NB}" git checkpoint
+    "${_NB}" git checkpoint
 
     [[ ! -e "${NB_DIR:?}/one/.index"      ]]
     [[   -e "${NB_DIR:?}/one/example.md"  ]]

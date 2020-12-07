@@ -7,8 +7,8 @@ load test_helper
 
 @test "'edit' with no argument exits and prints help." {
   {
-    run "${_NB}" init
-    run "${_NB}" add "Example initial content." --filename "example.md"
+    "${_NB}" init
+    "${_NB}" add "Example initial content." --filename "example.md"
 
     _original="$(cat "${NB_DIR}/home/example.md")"
   }
@@ -56,7 +56,7 @@ load test_helper
 
 @test "'edit <selector>' with empty repo exits with 1 and prints message." {
   {
-    run "${_NB}" init
+    "${_NB}" init
   }
 
   run "${_NB}" edit 1
@@ -73,9 +73,9 @@ load test_helper
 
 @test "'edit <scope>:<selector>' with <filename> argument prints scoped output." {
   {
-    run "${_NB}" init
-    run "${_NB}" notebooks add "one"
-    run "${_NB}" one:add "Example initial content." --filename "example.md"
+    "${_NB}" init
+    "${_NB}" notebooks add "one"
+    "${_NB}" one:add "Example initial content." --filename "example.md"
 
     [[ -e "${NB_DIR}/one/example.md"                        ]]
     [[ ! "$(cat "${NB_DIR}/one/example.md")" =~ mock_editor ]]
@@ -106,9 +106,9 @@ load test_helper
 
 @test "'<scope>:edit <selector>' with <filename> argument prints scoped output." {
   {
-    run "${_NB}" init
-    run "${_NB}" notebooks add "one"
-    run "${_NB}" one:add "Example initial content."
+    "${_NB}" init
+    "${_NB}" notebooks add "one"
+    "${_NB}" one:add "Example initial content."
 
     _filename=$("${_NB}" one: -n 1 --no-id --filenames | head -1)
 
@@ -138,9 +138,9 @@ load test_helper
 
 @test "'<scope>:<selector> edit' alternative with edits properly without errors." {
   {
-    run "${_NB}" init
-    run "${_NB}" notebooks add "one"
-    run "${_NB}" one:add "Example initial content."
+    "${_NB}" init
+    "${_NB}" notebooks add "one"
+    "${_NB}" one:add "Example initial content."
 
     _filename=$("${_NB}" one:list -n 1 --no-id --filenames | head -1)
 
@@ -178,9 +178,9 @@ load test_helper
 
 @test "'<selector> <scope>:edit' alternative with edits properly without errors." {
   {
-    run "${_NB}" init
-    run "${_NB}" notebooks add "one"
-    run "${_NB}" one:add "Example initial content."
+    "${_NB}" init
+    "${_NB}" notebooks add "one"
+    "${_NB}" one:add "Example initial content."
 
     _filename=$("${_NB}" one:list -n 1 --no-id --filenames | head -1)
 
@@ -218,13 +218,13 @@ load test_helper
 
 @test "'edit' with no changes does not print output." {
   {
-    run "${_NB}" init
-    run "${_NB}" add "example.md" --content "Example content."
+    "${_NB}" init
+    "${_NB}" add "example.md" --content "Example content."
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
-  export EDITOR="${BATS_TEST_DIRNAME}/fixtures/bin/mock_editor_no_op" &&
+  export EDITOR="${NB_TEST_BASE_PATH}/fixtures/bin/mock_editor_no_op" &&
     run "${_NB}" edit "${_filename}"
 
   printf "\${status}: '%s'\\n" "${status}"
@@ -236,14 +236,14 @@ load test_helper
 
 @test "'edit' encrypted with no changes does not print output." {
   {
-    run "${_NB}" init
-    run "${_NB}" add "example.md" --content "Example content." \
+    "${_NB}" init
+    "${_NB}" add "example.md" --content "Example content." \
       --encrypt --password example
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
-  export EDITOR="${BATS_TEST_DIRNAME}/fixtures/bin/mock_editor_no_op" &&
+  export EDITOR="${NB_TEST_BASE_PATH}/fixtures/bin/mock_editor_no_op" &&
     run "${_NB}" edit "${_filename}" --password example
 
   printf "\${status}: '%s'\\n" "${status}"
@@ -257,10 +257,10 @@ load test_helper
 
 @test "'edit' with <filename> argument edits properly without errors." {
   {
-    run "${_NB}" init
-    run "${_NB}" add
+    "${_NB}" init
+    "${_NB}" add
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" edit "${_filename}"
@@ -276,14 +276,14 @@ load test_helper
 
   printf "EDITOR: '%s'\\n" "${EDITOR:-}"
 
-  printf "cat %s:\\n%s\\n" "${_NOTEBOOK_PATH}/${_filename}" \
-    "$(cat "${_NOTEBOOK_PATH}/${_filename}")"
+  printf "cat %s:\\n%s\\n" "${NB_DIR}/home/${_filename}" \
+    "$(cat "${NB_DIR}/home/${_filename}")"
 
-  [[ "$(cat "${_NOTEBOOK_PATH}/${_filename}")" =~ mock_editor ]]
+  [[ "$(cat "${NB_DIR}/home/${_filename}")" =~ mock_editor ]]
 
   # Creates git commit:
 
-  cd "${_NOTEBOOK_PATH}" || return 1
+  cd "${NB_DIR}/home" || return 1
 
   printf "git log --stat:\\n%s\\n" "$(git log --stat)"
 
@@ -302,12 +302,12 @@ load test_helper
 
 @test "'edit' with <filename> with spaces edits properly without errors." {
   {
-    run "${_NB}" init
-    run "${_NB}" add "Note name with spaces.md"
+    "${_NB}" init
+    "${_NB}" add "Note name with spaces.md"
 
     _filename="Note name with spaces.md"
 
-    [[ -e "${_NOTEBOOK_PATH}/${_filename}" ]]
+    [[ -e "${NB_DIR}/home/${_filename}" ]]
   }
 
   run "${_NB}" edit "${_filename}"
@@ -321,14 +321,14 @@ load test_helper
 
   # Updates note file:
 
-  printf "cat %s:\\n%s\\n" "${_NOTEBOOK_PATH}/${_filename}" \
-    "$(cat "${_NOTEBOOK_PATH}/${_filename}")"
+  printf "cat %s:\\n%s\\n" "${NB_DIR}/home/${_filename}" \
+    "$(cat "${NB_DIR}/home/${_filename}")"
 
-  [[ "$(cat "${_NOTEBOOK_PATH}/${_filename}")" =~ mock_editor  ]]
+  [[ "$(cat "${NB_DIR}/home/${_filename}")" =~ mock_editor  ]]
 
   # Creates git commit:
 
-  cd "${_NOTEBOOK_PATH}" || return 1
+  cd "${NB_DIR}/home" || return 1
 
   printf "git log --stat:\\n%s\\n" "$(git log --stat)"
 
@@ -349,10 +349,10 @@ load test_helper
 
 @test "'edit <id>' edits properly without errors." {
   {
-    run "${_NB}" init
-    run "${_NB}" add
+    "${_NB}" init
+    "${_NB}" add
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" edit 1
@@ -366,14 +366,14 @@ load test_helper
 
   # Updates note file:
 
-  printf "cat %s:\\n%s\\n" "${_NOTEBOOK_PATH}/${_filename}" \
-    "$(cat "${_NOTEBOOK_PATH}/${_filename}")"
+  printf "cat %s:\\n%s\\n" "${NB_DIR}/home/${_filename}" \
+    "$(cat "${NB_DIR}/home/${_filename}")"
 
-  [[ "$(cat "${_NOTEBOOK_PATH}/${_filename}")" =~ mock_editor ]]
+  [[ "$(cat "${NB_DIR}/home/${_filename}")" =~ mock_editor ]]
 
   # Creates git commit:
 
-  cd "${_NOTEBOOK_PATH}" || return 1
+  cd "${NB_DIR}/home" || return 1
 
   printf "git log --stat:\\n%s\\n" "$(git log --stat)"
 
@@ -392,19 +392,19 @@ load test_helper
 
 @test "'<id> edit' alternative edits properly without errors." {
   {
-    run "${_NB}" init
-    run "${_NB}" add "Example initial content."
+    "${_NB}" init
+    "${_NB}" add "Example initial content."
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
 
-    [[ ! "$(cat "${_NOTEBOOK_PATH}/${_filename}")" =~ mock_editor ]]
+    [[ ! "$(cat "${NB_DIR}/home/${_filename}")" =~ mock_editor ]]
   }
 
   run "${_NB}" 1 edit
 
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
-  cat "${_NOTEBOOK_PATH}/${_filename}"
+  cat "${NB_DIR}/home/${_filename}"
 
   # Returns status 0:
 
@@ -412,14 +412,14 @@ load test_helper
 
   # Updates note file:
 
-  printf "cat %s:\\n%s\\n" "${_NOTEBOOK_PATH}/${_filename}" \
-    "$(cat "${_NOTEBOOK_PATH}/${_filename}")"
+  printf "cat %s:\\n%s\\n" "${NB_DIR}/home/${_filename}" \
+    "$(cat "${NB_DIR}/home/${_filename}")"
 
-  [[ "$(cat "${_NOTEBOOK_PATH}/${_filename}")" =~ mock_editor ]]
+  [[ "$(cat "${NB_DIR}/home/${_filename}")" =~ mock_editor ]]
 
   # Creates git commit:
 
-  cd "${_NOTEBOOK_PATH}" || return 1
+  cd "${NB_DIR}/home" || return 1
 
   printf "git log --stat:\\n%s\\n" "$(git log --stat)"
 
@@ -440,13 +440,13 @@ load test_helper
 
 @test "'edit' with <path> argument edits properly without errors." {
   {
-    run "${_NB}" init
-    run "${_NB}" add
+    "${_NB}" init
+    "${_NB}" add
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
-  run "${_NB}" edit "${_NOTEBOOK_PATH}/${_filename}"
+  run "${_NB}" edit "${NB_DIR}/home/${_filename}"
 
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
@@ -457,14 +457,14 @@ load test_helper
 
   # Updates note file:
 
-  printf "cat %s:\\n%s\\n" "${_NOTEBOOK_PATH}/${_filename}" \
-    "$(cat "${_NOTEBOOK_PATH}/${_filename}")"
+  printf "cat %s:\\n%s\\n" "${NB_DIR}/home/${_filename}" \
+    "$(cat "${NB_DIR}/home/${_filename}")"
 
-  [[ "$(cat "${_NOTEBOOK_PATH}/${_filename}")" =~ mock_editor ]]
+  [[ "$(cat "${NB_DIR}/home/${_filename}")" =~ mock_editor ]]
 
   # Creates git commit:
 
-  cd "${_NOTEBOOK_PATH}" || return 1
+  cd "${NB_DIR}/home" || return 1
 
   printf "git log --stat:\\n%s\\n" "$(git log --stat)"
 
@@ -485,10 +485,10 @@ load test_helper
 
 @test "'edit' with <title> argument edits properly without errors." {
   {
-    run "${_NB}" init
-    run "${_NB}" add --title "Example Title"
+    "${_NB}" init
+    "${_NB}" add --title "Example Title"
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" edit "Example Title"
@@ -502,14 +502,14 @@ load test_helper
 
   # Updates note file:
 
-  printf "cat %s:\\n%s\\n" "${_NOTEBOOK_PATH}/${_filename}" \
-    "$(cat "${_NOTEBOOK_PATH}/${_filename}")"
+  printf "cat %s:\\n%s\\n" "${NB_DIR}/home/${_filename}" \
+    "$(cat "${NB_DIR}/home/${_filename}")"
 
-  [[ "$(cat "${_NOTEBOOK_PATH}/${_filename}")" =~ mock_editor ]]
+  [[ "$(cat "${NB_DIR}/home/${_filename}")" =~ mock_editor ]]
 
   # Creates git commit:
 
-  cd "${_NOTEBOOK_PATH}" || return 1
+  cd "${NB_DIR}/home" || return 1
 
   printf "git log --stat:\\n%s\\n" "$(git log --stat)"
 
@@ -530,11 +530,11 @@ load test_helper
 
 @test "'edit' with piped content edits properly without errors." {
   {
-    run "${_NB}" init
-    run "${_NB}" add "# Example"
+    "${_NB}" init
+    "${_NB}" add "# Example"
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
-    _original="$(cat "${_NOTEBOOK_PATH}/${_filename}")"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
+    _original="$(cat "${NB_DIR}/home/${_filename}")"
   }
 
   run bash -c "echo '## Piped' | ${_NB} edit 1"
@@ -548,16 +548,16 @@ load test_helper
 
   # Updates note file:
 
-  printf "cat %s:\\n%s\\n" "${_NOTEBOOK_PATH}/${_filename}" \
-    "$(cat "${_NOTEBOOK_PATH}/${_filename}")"
+  printf "cat %s:\\n%s\\n" "${NB_DIR}/home/${_filename}" \
+    "$(cat "${NB_DIR}/home/${_filename}")"
 
-  [[ "$(cat "${_NOTEBOOK_PATH}/${_filename}")" != "${_original}" ]]
-  grep -q '# Example' "${_NOTEBOOK_PATH}"/*
-  grep -q '## Piped' "${_NOTEBOOK_PATH}"/*
+  [[ "$(cat "${NB_DIR}/home/${_filename}")" != "${_original}" ]]
+  grep -q '# Example' "${NB_DIR}/home"/*
+  grep -q '## Piped' "${NB_DIR}/home"/*
 
   # Creates git commit:
 
-  cd "${_NOTEBOOK_PATH}" || return 1
+  cd "${NB_DIR}/home" || return 1
 
   printf "git log --stat:\\n%s\\n" "$(git log --stat)"
 
@@ -578,10 +578,10 @@ load test_helper
 
 @test "'edit' with --content option edits without errors." {
   {
-    run "${_NB}" init
-    run "${_NB}" add
+    "${_NB}" init
+    "${_NB}" add
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" edit 1 --content "Example content."
@@ -595,14 +595,14 @@ load test_helper
 
   # Updates note file:
 
-  printf "cat %s:\\n%s\\n" "${_NOTEBOOK_PATH}/${_filename}" \
-    "$(cat "${_NOTEBOOK_PATH}/${_filename}")"
+  printf "cat %s:\\n%s\\n" "${NB_DIR}/home/${_filename}" \
+    "$(cat "${NB_DIR}/home/${_filename}")"
 
-  [[ "$(cat "${_NOTEBOOK_PATH}/${_filename}")" =~ Example\ content\.  ]]
+  [[ "$(cat "${NB_DIR}/home/${_filename}")" =~ Example\ content\.  ]]
 
   # Creates git commit:
 
-  cd "${_NOTEBOOK_PATH}" || return 1
+  cd "${NB_DIR}/home" || return 1
 
   printf "git log --stat:\\n%s\\n" "$(git log --stat)"
 
@@ -621,13 +621,13 @@ load test_helper
 
 @test "'edit' with empty --content option exits with 1" {
   {
-    run "${_NB}" init
-    run "${_NB}" add "Example initial content."
+    "${_NB}" init
+    "${_NB}" add "Example initial content."
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
-    _original="$(cat "${_NOTEBOOK_PATH}/${_filename}")"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
+    _original="$(cat "${NB_DIR}/home/${_filename}")"
 
-    [[ ! "$(cat "${_NOTEBOOK_PATH}/${_filename}")" =~ mock_editor ]]
+    [[ ! "$(cat "${NB_DIR}/home/${_filename}")" =~ mock_editor ]]
   }
 
   run "${_NB}" edit 1 --content
@@ -641,12 +641,12 @@ load test_helper
 
   # Does not update note file:
 
-  printf "cat %s:\\n%s\\n" "${_NOTEBOOK_PATH}/${_filename}" \
-    "$(cat "${_NOTEBOOK_PATH}/${_filename}")"
+  printf "cat %s:\\n%s\\n" "${NB_DIR}/home/${_filename}" \
+    "$(cat "${NB_DIR}/home/${_filename}")"
 
-  [[ ! "$(cat "${_NOTEBOOK_PATH}/${_filename}")" =~ mock_editor   ]]
+  [[ ! "$(cat "${NB_DIR}/home/${_filename}")" =~ mock_editor   ]]
 
-  diff <(cat "${_NOTEBOOK_PATH}/${_filename}") <(printf "%s\\n" "${_original}")
+  diff <(cat "${NB_DIR}/home/${_filename}") <(printf "%s\\n" "${_original}")
 
   # Prints error message:
 
@@ -657,11 +657,11 @@ load test_helper
 
 @test "'edit' with encrypted file edits properly without errors." {
   {
-    run "${_NB}" init
-    run "${_NB}" add "# Content" --encrypt --password=example
+    "${_NB}" init
+    "${_NB}" add "# Content" --encrypt --password=example
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
-    _original_hash="$(_get_hash "${_NOTEBOOK_PATH}/${_filename}")"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
+    _original_hash="$(_get_hash "${NB_DIR}/home/${_filename}")"
   }
 
   run "${_NB}" edit 1 --password=example
@@ -675,11 +675,11 @@ load test_helper
 
   # Updates file:
 
-  [[ "$(_get_hash "${_NOTEBOOK_PATH}/${_filename}")" != "${_original_hash}" ]]
+  [[ "$(_get_hash "${NB_DIR}/home/${_filename}")" != "${_original_hash}" ]]
 
   # Creates git commit:
 
-  cd "${_NOTEBOOK_PATH}" || return 1
+  cd "${NB_DIR}/home" || return 1
 
   printf "git log --stat:\\n%s\\n" "$(git log --stat)"
 
@@ -698,11 +698,11 @@ load test_helper
 
 @test "'edit' with piped content and encrypted file edits properly without errors." {
   {
-    run "${_NB}" init
-    run "${_NB}" add "# Example" --encrypt --password=example
+    "${_NB}" init
+    "${_NB}" add "# Example" --encrypt --password=example
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
-    _original_hash="$(_get_hash "${_NOTEBOOK_PATH}/${_filename}")"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
+    _original_hash="$(_get_hash "${NB_DIR}/home/${_filename}")"
   }
 
   run bash -c "echo '## Piped' | ${_NB} edit 1 --password=example"
@@ -716,11 +716,11 @@ load test_helper
 
   # Updates file:
 
-  [[ "$(_get_hash "${_NOTEBOOK_PATH}/${_filename}")" != "${_original_hash}" ]]
+  [[ "$(_get_hash "${NB_DIR}/home/${_filename}")" != "${_original_hash}" ]]
 
   # Creates git commit:
 
-  cd "${_NOTEBOOK_PATH}" || return 1
+  cd "${NB_DIR}/home" || return 1
 
   printf "git log --stat:\\n%s\\n" "$(git log --stat)"
 
@@ -741,10 +741,10 @@ load test_helper
 
 @test "'edit <id>' with multi-word \$EDITOR edits properly without errors." {
   {
-    run "${_NB}" init
-    run "${_NB}" add --content "Example"
+    "${_NB}" init
+    "${_NB}" add --content "Example"
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
 
     "${_NB}" set editor "mock_editor --flag"
   }
@@ -760,14 +760,14 @@ load test_helper
 
   # Updates note file:
 
-  printf "cat %s:\\n%s\\n" "${_NOTEBOOK_PATH}/${_filename}" \
-    "$(cat "${_NOTEBOOK_PATH}/${_filename}")"
+  printf "cat %s:\\n%s\\n" "${NB_DIR}/home/${_filename}" \
+    "$(cat "${NB_DIR}/home/${_filename}")"
 
-  [[ "$(cat "${_NOTEBOOK_PATH}/${_filename}")" =~ mock_editor ]]
+  [[ "$(cat "${NB_DIR}/home/${_filename}")" =~ mock_editor ]]
 
   # Creates git commit:
 
-  cd "${_NOTEBOOK_PATH}" || return 1
+  cd "${NB_DIR}/home" || return 1
 
   printf "git log --stat:\\n%s\\n" "$(git log --stat)"
 
@@ -786,8 +786,8 @@ load test_helper
 
 @test "'edit <id>' with multi-word \$EDITOR edits properly with filename with spaces." {
   {
-    run "${_NB}" init
-    run "${_NB}" add --filename "multi-word filename.md"
+    "${_NB}" init
+    "${_NB}" add --filename "multi-word filename.md"
 
     "${_NB}" set editor "mock_editor --flag"
   }
@@ -803,14 +803,14 @@ load test_helper
 
   # Updates note file:
 
-  printf "cat %s:\\n%s\\n" "${_NOTEBOOK_PATH}/multi-word filename.md" \
-    "$(cat "${_NOTEBOOK_PATH}/multi-word filename.md")"
+  printf "cat %s:\\n%s\\n" "${NB_DIR}/home/multi-word filename.md" \
+    "$(cat "${NB_DIR}/home/multi-word filename.md")"
 
-  [[ "$(cat "${_NOTEBOOK_PATH}/multi-word filename.md")" =~ mock_editor ]]
+  [[ "$(cat "${NB_DIR}/home/multi-word filename.md")" =~ mock_editor ]]
 
   # Creates git commit:
 
-  cd "${_NOTEBOOK_PATH}" || return 1
+  cd "${NB_DIR}/home" || return 1
 
   printf "git log --stat:\\n%s\\n" "$(git log --stat)"
 

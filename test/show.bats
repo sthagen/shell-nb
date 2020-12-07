@@ -6,10 +6,10 @@ load test_helper
 
 @test "'show' with no argument exits with status 1 and prints help." {
   {
-    run "${_NB}" init
-    run "${_NB}" add
+    "${_NB}" init
+    "${_NB}" add
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show
@@ -25,10 +25,10 @@ load test_helper
 @test "'show' with no argument does not show the note file." {
   skip "TODO: Determine how to test for '\$PAGER'."
   {
-    run "${_NB}" init
-    run "${_NB}" add
+    "${_NB}" init
+    "${_NB}" add
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show
@@ -41,10 +41,10 @@ load test_helper
 
 @test "'show --dump' with argument exits with 0 and prints note with highlighting." {
   {
-    run "${_NB}" init
-    run "${_NB}" add "# Example"
+    "${_NB}" init
+    "${_NB}" add "# Example"
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show 1 --dump
@@ -59,10 +59,10 @@ load test_helper
 
 @test "'show --dump --no-color' with argument exits with 0 and prints note without highlighting." {
   {
-    run "${_NB}" init
-    run "${_NB}" add "# Example"
+    "${_NB}" init
+    "${_NB}" add "# Example"
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show 1 --dump --no-color
@@ -76,10 +76,10 @@ load test_helper
 
 @test "'show --dump' with no argument exits with 1 and prints help." {
   {
-    run "${_NB}" init
-    run "${_NB}" add "# Example"
+    "${_NB}" init
+    "${_NB}" add "# Example"
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show --dump
@@ -97,7 +97,7 @@ load test_helper
 
 @test "'show <selector>' with empty repo exits with 1 and prints help." {
   {
-    run "${_NB}" init
+    "${_NB}" init
   }
 
   run "${_NB}" show 1
@@ -113,10 +113,10 @@ load test_helper
 
 @test "'show <filename> --dump' exits with status 0 and dumps note file." {
   {
-    run "${_NB}" init
-    run "${_NB}" add
+    "${_NB}" init
+    "${_NB}" add
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show "${_filename}" --dump
@@ -132,10 +132,10 @@ load test_helper
 
 @test "'show <id> --dump' exits with status 0 and dumps note file." {
   {
-    run "${_NB}" init
-    run "${_NB}" add
+    "${_NB}" init
+    "${_NB}" add
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show 1 --dump
@@ -152,13 +152,13 @@ load test_helper
 
 @test "'show <path> --dump' exits with status 0 and dumps note file." {
   {
-    run "${_NB}" init
-    run "${_NB}" add
+    "${_NB}" init
+    "${_NB}" add
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
-  run "${_NB}" show "${_NOTEBOOK_PATH}/${_filename}" --dump
+  run "${_NB}" show "${NB_DIR}/home/${_filename}" --dump
 
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
@@ -171,12 +171,12 @@ load test_helper
 
 @test "'show <title> --dump' exits with status 0 and dumps note file." {
   {
-    run "${_NB}" init
-    run "${_NB}" add --title "Example Title"
+    "${_NB}" init
+    "${_NB}" add --title "Example Title"
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
-  _title="$(head -1 "${_NOTEBOOK_PATH}/${_filename}" | sed 's/^\# //')"
+  _title="$(head -1 "${NB_DIR}/home/${_filename}" | sed 's/^\# //')"
 
   run "${_NB}" show "${_title}" --dump
 
@@ -191,10 +191,10 @@ load test_helper
 
 @test "'show <filename> --path' exits with status 0 and prints note path." {
   {
-    run "${_NB}" init
-    run "${_NB}" add
+    "${_NB}" init
+    "${_NB}" add
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show "${_filename}" --path
@@ -202,18 +202,18 @@ load test_helper
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
 
-  [[ ${status} -eq 0                                  ]]
-  [[ "${output}" == "${_NOTEBOOK_PATH}/${_filename}"  ]]
+  [[ ${status} -eq 0                              ]]
+  [[ "${output}" == "${NB_DIR}/home/${_filename}" ]]
 }
 
 # `show <id> --path` ##########################################################
 
 @test "'show <id> --path' exits with status 0 and prints note path." {
   {
-    run "${_NB}" init
-    run "${_NB}" add
+    "${_NB}" init
+    "${_NB}" add
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show 1 --path
@@ -221,38 +221,38 @@ load test_helper
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
 
-  [[ ${status} -eq 0                                  ]]
-  [[ "${output}" == "${_NOTEBOOK_PATH}/${_filename}"  ]]
+  [[ ${status} -eq 0                              ]]
+  [[ "${output}" == "${NB_DIR}/home/${_filename}" ]]
 }
 
 # `show <path> --path` #######################################################
 
 @test "'show <path> --path' exits with status 0 and prints note path." {
   {
-    run "${_NB}" init
-    run "${_NB}" add
+    "${_NB}" init
+    "${_NB}" add
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
-  run "${_NB}" show "${_NOTEBOOK_PATH}/${_filename}" --path
+  run "${_NB}" show "${NB_DIR}/home/${_filename}" --path
 
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
 
-  [[ ${status} -eq 0                                  ]]
-  [[ "${output}" == "${_NOTEBOOK_PATH}/${_filename}"  ]]
+  [[ ${status} -eq 0                              ]]
+  [[ "${output}" == "${NB_DIR}/home/${_filename}" ]]
 }
 
 # `show <title> --path` #######################################################
 
 @test "'show <title> --path' exits with status 0 and prints note path." {
   {
-    run "${_NB}" init
-    run "${_NB}" add --title "Example Title"
+    "${_NB}" init
+    "${_NB}" add --title "Example Title"
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
-    _title="$(head -1 "${_NOTEBOOK_PATH}/${_filename}" | sed 's/^\# //')"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
+    _title="$(head -1 "${NB_DIR}/home/${_filename}" | sed 's/^\# //')"
   }
 
   run "${_NB}" show "${_title}" --path
@@ -261,17 +261,17 @@ load test_helper
   printf "\${output}: '%s'\\n" "${output}"
 
   [[ ${status} -eq 0                                  ]]
-  [[ "${output}" == "${_NOTEBOOK_PATH}/${_filename}"  ]]
+  [[ "${output}" == "${NB_DIR}/home/${_filename}"  ]]
 }
 
 # `show <filename> --id` ######################################################
 
 @test "'show <filename> --id' exits with status 0 and prints note id." {
   {
-    run "${_NB}" init
-    run "${_NB}" add
+    "${_NB}" init
+    "${_NB}" add
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show "${_filename}" --id
@@ -287,10 +287,10 @@ load test_helper
 
 @test "'show <id> --id' exits with status 0 and prints note id." {
   {
-    run "${_NB}" init
-    run "${_NB}" add
+    "${_NB}" init
+    "${_NB}" add
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show 1 --id
@@ -306,13 +306,13 @@ load test_helper
 
 @test "'show <path> --id' exits with status 0 and prints note id." {
   {
-    run "${_NB}" init
-    run "${_NB}" add
+    "${_NB}" init
+    "${_NB}" add
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
-  run "${_NB}" show "${_NOTEBOOK_PATH}/${_filename}" --id
+  run "${_NB}" show "${NB_DIR}/home/${_filename}" --id
 
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
@@ -325,14 +325,14 @@ load test_helper
 
 @test "'show <title> --id' exits with status 0 and prints note id." {
   {
-    run "${_NB}" init
-    run "${_NB}" add
+    "${_NB}" init
+    "${_NB}" add
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
-    _title="$(head -1 "${_NOTEBOOK_PATH}/${_filename}" | sed 's/^\# //')"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
+    _title="$(head -1 "${NB_DIR}/home/${_filename}" | sed 's/^\# //')"
   }
 
-  run "${_NB}" show "${_NOTEBOOK_PATH}/${_filename}" --id
+  run "${_NB}" show "${NB_DIR}/home/${_filename}" --id
 
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
@@ -345,10 +345,10 @@ load test_helper
 
 @test "'show' with encrypted file show properly without errors." {
   {
-    run "${_NB}" init
-    run "${_NB}" add "# Content" --encrypt --password=example
+    "${_NB}" init
+    "${_NB}" add "# Content" --encrypt --password=example
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show 1 --password=example --dump
@@ -367,10 +367,10 @@ load test_helper
 
 @test "'show <id> --filename' exits with status 0 and prints note filename." {
   {
-    run "${_NB}" init
-    run "${_NB}" add "example.md"
+    "${_NB}" init
+    "${_NB}" add "example.md"
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show 1 --filename
@@ -384,10 +384,10 @@ load test_helper
 
 @test "'show <id> --basename' exits with status 0 and prints note filename." {
   {
-    run "${_NB}" init
-    run "${_NB}" add "example.md"
+    "${_NB}" init
+    "${_NB}" add "example.md"
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show 1 --basename
@@ -403,10 +403,10 @@ load test_helper
 
 @test "'show <id> --title' exits with status 0 and prints note filename." {
   {
-    run "${_NB}" init
-    run "${_NB}" add "example.md" --title "Example Title"
+    "${_NB}" init
+    "${_NB}" add "example.md" --title "Example Title"
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show 1 --title
@@ -422,10 +422,10 @@ load test_helper
 
 @test "'show <id> --indicators' exits with status 0 and prints bookmark indicator." {
   {
-    run "${_NB}" init
-    run "${_NB}" add "example.bookmark.md" --content "<https://example.test>"
+    "${_NB}" init
+    "${_NB}" add "example.bookmark.md" --content "<https://example.test>"
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show 1 --indicators
@@ -440,10 +440,10 @@ load test_helper
 
 @test "'show <id> --indicators' exits with status 0 and prints encrypted indicator." {
   {
-    run "${_NB}" init
-    run "${_NB}" add "example.md" --encrypt --password=password
+    "${_NB}" init
+    "${_NB}" add "example.md" --encrypt --password=password
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show 1 --indicators
@@ -458,12 +458,12 @@ load test_helper
 
 @test "'show <id> --indicators' exits with status 0 and prints encrypted bookmark indicators." {
   {
-    run "${_NB}" init
-    run "${_NB}" add "example.bookmark.md" \
-      --content "<https://example.test>"   \
+    "${_NB}" init
+    "${_NB}" add "example.bookmark.md"    \
+      --content "<https://example.test>"  \
       --encrypt --password=password
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show 1 --indicators
@@ -480,10 +480,10 @@ load test_helper
 
 @test "'show <id> --added' exits with status 0 and prints the added timestamp." {
   {
-    run "${_NB}" init
-    run "${_NB}" add "example.md" --title "Example Title"
+    "${_NB}" init
+    "${_NB}" add "example.md" --title "Example Title"
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show 1 --added
@@ -497,10 +497,10 @@ load test_helper
 
 @test "'show <id> -a' exits with status 0 and prints the added timestamp." {
   {
-    run "${_NB}" init
-    run "${_NB}" add "example.md" --title "Example Title"
+    "${_NB}" init
+    "${_NB}" add "example.md" --title "Example Title"
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show 1 -a
@@ -516,8 +516,8 @@ load test_helper
 
 @test "'show <id> --updated' exits with status 0 and prints the added timestamp." {
   {
-    run "${_NB}" init
-    run "${_NB}" add "example.md" --title "Example Title"
+    "${_NB}" init
+    "${_NB}" add "example.md" --title "Example Title"
 
     _added="$("${_NB}" show 1 --added)"
 
@@ -527,9 +527,9 @@ load test_helper
 
     sleep 1
 
-    run "${_NB}" edit 1 --content "More content."
+    "${_NB}" edit 1 --content "More content."
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show 1 --updated
@@ -545,23 +545,23 @@ load test_helper
 
 @test "'show <id> -u' exits with status 0 and prints the added timestamp." {
   {
-    run "${_NB}" init
-    run "${_NB}" add "example.md" --title "Example Title"
+    "${_NB}" init
+    "${_NB}" add "example.md" --title "Example Title"
 
     _added="$("${_NB}" show 1 --added)"
 
-    run "${_NB}" show 1 -u
+    run "${_NB}" show 1 --added
 
     [[ "${output}" == "${_added}"  ]]
 
     sleep 1
 
-    run "${_NB}" edit 1 --content "More content."
+    "${_NB}" edit 1 --content "More content."
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
-  run "${_NB}" show 1 --updated
+  run "${_NB}" show 1 -u
 
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
@@ -576,7 +576,7 @@ load test_helper
 
 @test "'show <id> --selector-id' exits with status 0 and prints the selector id." {
   {
-    run "${_NB}" init
+    "${_NB}" init
   }
 
   run "${_NB}" show 42 --selector-id
@@ -590,7 +590,7 @@ load test_helper
 
 @test "'show <id> --selector-id' exits with status 0 and prints the selector id without notebook." {
   {
-    run "${_NB}" init
+    "${_NB}" init
   }
 
   run "${_NB}" show notebook:42 --selector-id
@@ -604,7 +604,7 @@ load test_helper
 
 @test "'show <id> --selector-id' exits with status 0 and prints the selector filename." {
   {
-    run "${_NB}" init
+    "${_NB}" init
   }
 
   run "${_NB}" show example.md --selector-id
@@ -618,7 +618,7 @@ load test_helper
 
 @test "'show <id> --selector-id' exits with status 0 and prints the selector filename without notebook." {
   {
-    run "${_NB}" init
+    "${_NB}" init
   }
 
   run "${_NB}" show notebook:example.md --selector-id
@@ -632,7 +632,7 @@ load test_helper
 
 @test "'show <id> --selector-id' exits with status 0 and prints the selector title." {
   {
-    run "${_NB}" init
+    "${_NB}" init
   }
 
   run "${_NB}" show Example\ Title --selector-id
@@ -646,7 +646,7 @@ load test_helper
 
 @test "'show <id> --selector-id' exits with status 0 and prints the selector title without notebook." {
   {
-    run "${_NB}" init
+    "${_NB}" init
   }
 
   run "${_NB}" show notebook:Example\ Title --selector-id
@@ -660,7 +660,7 @@ load test_helper
 
 @test "'show <id> --selector-id' exits with status 0 and prints the selector path." {
   {
-    run "${_NB}" init
+    "${_NB}" init
   }
 
   run "${_NB}" show /example/path --selector-id
@@ -674,7 +674,7 @@ load test_helper
 
 @test "'show <id> --selector-id' exits with status 0 and prints the selector path without notebook." {
   {
-    run "${_NB}" init
+    "${_NB}" init
   }
 
   run "${_NB}" show notebook:/example/path --selector-id
@@ -688,7 +688,7 @@ load test_helper
 
 @test "'show <id> --selector-id' exits with status 0 and prints nothing when blank with notebook." {
   {
-    run "${_NB}" init
+    "${_NB}" init
   }
 
   run "${_NB}" show notebook: --selector-id
@@ -704,10 +704,10 @@ load test_helper
 
 @test "'show <id> --type' with note exits with status 0 and prints note type." {
   {
-    run "${_NB}" init
-    run "${_NB}" add
+    "${_NB}" init
+    "${_NB}" add
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show 1 --type
@@ -721,10 +721,10 @@ load test_helper
 
 @test "'show <id> --type' with bookmark exits with status 0 and prints note type." {
   {
-    run "${_NB}" init
-    run "${_NB}" bookmark "${_BOOKMARK_URL}"
+    "${_NB}" init
+    "${_NB}" bookmark "${_BOOKMARK_URL}"
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show 1 --type
@@ -738,10 +738,10 @@ load test_helper
 
 @test "'show <id> --type <extension>' exits with status 0 when note matches." {
   {
-    run "${_NB}" init
-    run "${_NB}" add
+    "${_NB}" init
+    "${_NB}" add
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show 1 --type md
@@ -755,10 +755,10 @@ load test_helper
 
 @test "'show <id> --type <extension>' exits with status 0 when bookmark matches." {
   {
-    run "${_NB}" init
-    run "${_NB}" bookmark "${_BOOKMARK_URL}"
+    "${_NB}" init
+    "${_NB}" bookmark "${_BOOKMARK_URL}"
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show 1 --type bookmark.md
@@ -772,10 +772,10 @@ load test_helper
 
 @test "'show <id> --type <extension>' exits with status 0 when bookmark matches one level." {
   {
-    run "${_NB}" init
-    run "${_NB}" add
+    "${_NB}" init
+    "${_NB}" add
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show 1 --type md
@@ -789,10 +789,10 @@ load test_helper
 
 @test "'show <id> --type <type>' exits with status 0 when note matches." {
   {
-    run "${_NB}" init
-    run "${_NB}" add
+    "${_NB}" init
+    "${_NB}" add
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show 1 --type text
@@ -806,10 +806,10 @@ load test_helper
 
 @test "'show <id> --type <type>' exits with status 0 when bookmark matches." {
   {
-    run "${_NB}" init
-    run "${_NB}" bookmark "${_BOOKMARK_URL}"
+    "${_NB}" init
+    "${_NB}" bookmark "${_BOOKMARK_URL}"
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show 1 --type bookmark
@@ -823,10 +823,10 @@ load test_helper
 
 @test "'show <id> --type <type>' exits with status 1 when no type match." {
   {
-    run "${_NB}" init
-    run "${_NB}" add
+    "${_NB}" init
+    "${_NB}" add
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show 1 --type not-valid
@@ -842,12 +842,12 @@ load test_helper
 
 @test "'show <notebook>' exits with status 0 and runs ls in the notebook." {
   {
-    run "${_NB}" init
-    run "${_NB}" add "home-one.md"
-    run "${_NB}" add "home-two.md"
-    run "${_NB}" notebooks add example
-    run "${_NB}" example:add "example-one.md"
-    run "${_NB}" example:add "example-two.md"
+    "${_NB}" init
+    "${_NB}" add "home-one.md"
+    "${_NB}" add "home-two.md"
+    "${_NB}" notebooks add example
+    "${_NB}" example:add "example-one.md"
+    "${_NB}" example:add "example-two.md"
   }
 
   run "${_NB}" show example
@@ -865,12 +865,12 @@ load test_helper
 
 @test "'show <notebook>:' (with colon) exits with status 0 and runs ls in the notebook." {
   {
-    run "${_NB}" init
-    run "${_NB}" add "home-one.md"
-    run "${_NB}" add "home-two.md"
-    run "${_NB}" notebooks add example
-    run "${_NB}" example:add "example-one.md"
-    run "${_NB}" example:add "example-two.md"
+    "${_NB}" init
+    "${_NB}" add "home-one.md"
+    "${_NB}" add "home-two.md"
+    "${_NB}" notebooks add example
+    "${_NB}" example:add "example-one.md"
+    "${_NB}" example:add "example-two.md"
   }
 
   run "${_NB}" show example:
@@ -888,12 +888,12 @@ load test_helper
 
 @test "'show <notebook> --sort' exits with status 0 and runs ls in the notebook." {
   {
-    run "${_NB}" init
-    run "${_NB}" add "home-one.md"
-    run "${_NB}" add "home-two.md"
-    run "${_NB}" notebooks add example
-    run "${_NB}" example:add "example-one.md"
-    run "${_NB}" example:add "example-two.md"
+    "${_NB}" init
+    "${_NB}" add "home-one.md"
+    "${_NB}" add "home-two.md"
+    "${_NB}" notebooks add example
+    "${_NB}" example:add "example-one.md"
+    "${_NB}" example:add "example-two.md"
   }
 
   run "${_NB}" show example --sort
@@ -910,10 +910,10 @@ load test_helper
 
 @test "'s <id> --filename' exits with status 0 and prints note filename." {
   {
-    run "${_NB}" init
-    run "${_NB}" add "example.md"
+    "${_NB}" init
+    "${_NB}" add "example.md"
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" s 1 --filename
@@ -929,10 +929,10 @@ load test_helper
 
 @test "'view <id> --filename' exits with status 0 and prints note filename." {
   {
-    run "${_NB}" init
-    run "${_NB}" add "example.md"
+    "${_NB}" init
+    "${_NB}" add "example.md"
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" view 1 --filename
@@ -948,10 +948,10 @@ load test_helper
 
 @test "'<id> show --filename' exits with status 0 and prints note filename." {
   {
-    run "${_NB}" init
-    run "${_NB}" add "example.md"
+    "${_NB}" init
+    "${_NB}" add "example.md"
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" 1 show --filename
@@ -967,11 +967,11 @@ load test_helper
 
 @test "'show <scope>:<id> --filename' exits with status 0 and prints note filename." {
   {
-    run "${_NB}" init
-    run "${_NB}" notebooks add "one"
-    run "${_NB}" one:add "example.md"
+    "${_NB}" init
+    "${_NB}" notebooks add "one"
+    "${_NB}" one:add "example.md"
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
 
     [[ -e "${NB_DIR}/one/example.md"  ]]
   }
@@ -987,11 +987,11 @@ load test_helper
 
 @test "'<scope>:<id> show --filename' exits with status 0 and prints note filename." {
   {
-    run "${_NB}" init
-    run "${_NB}" notebooks add "one"
-    run "${_NB}" one:add "example.md"
+    "${_NB}" init
+    "${_NB}" notebooks add "one"
+    "${_NB}" one:add "example.md"
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
 
     [[ -e "${NB_DIR}/one/example.md"  ]]
   }
@@ -1007,11 +1007,11 @@ load test_helper
 
 @test "'<scoped>:show <id> --filename' exits with status 0 and prints note filename." {
   {
-    run "${_NB}" init
-    run "${_NB}" notebooks add "one"
-    run "${_NB}" one:add "example.md"
+    "${_NB}" init
+    "${_NB}" notebooks add "one"
+    "${_NB}" one:add "example.md"
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
 
     [[ -e "${NB_DIR}/one/example.md"  ]]
   }
@@ -1027,11 +1027,11 @@ load test_helper
 
 @test "'<id> <scoped>:show --filename' exits with status 0 and prints note filename." {
   {
-    run "${_NB}" init
-    run "${_NB}" notebooks add "one"
-    run "${_NB}" one:add "example.md"
+    "${_NB}" init
+    "${_NB}" notebooks add "one"
+    "${_NB}" one:add "example.md"
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
 
     [[ -e "${NB_DIR}/one/example.md"  ]]
   }
@@ -1049,11 +1049,11 @@ load test_helper
 
 @test "'show <selector> --filename' with <selector> matching notebook name and note prints filename." {
   {
-    run "${_NB}" init
-    run "${_NB}" add "example.md" --title "example"
-    run "${_NB}" notebooks add "example"
+    "${_NB}" init
+    "${_NB}" add "example.md" --title "example"
+    "${_NB}" notebooks add "example"
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show example --filename
@@ -1067,11 +1067,11 @@ load test_helper
 
 @test "'show <selector> --filename' with <selector> only matching notebook name prints message." {
   {
-    run "${_NB}" init
-    run "${_NB}" add "sample.md" --title "sample"
-    run "${_NB}" notebooks add "example"
+    "${_NB}" init
+    "${_NB}" add "sample.md" --title "sample"
+    "${_NB}" notebooks add "example"
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show example --filename
@@ -1085,11 +1085,11 @@ load test_helper
 
 @test "'show <selector> --path' with <selector> matching notebook name and note prints path." {
   {
-    run "${_NB}" init
-    run "${_NB}" add "example.md" --title "example"
-    run "${_NB}" notebooks add "example"
+    "${_NB}" init
+    "${_NB}" add "example.md" --title "example"
+    "${_NB}" notebooks add "example"
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show example --path
@@ -1097,17 +1097,17 @@ load test_helper
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
 
-  [[ ${status} -eq 0                                  ]]
-  [[ "${output}" == "${NB_NOTEBOOK_PATH}/example.md"  ]]
+  [[ ${status} -eq 0                            ]]
+  [[ "${output}" == "${NB_DIR}/home/example.md" ]]
 }
 
 @test "'show <selector> --path' with <selector> only matching notebook name prints message." {
   {
-    run "${_NB}" init
-    run "${_NB}" add "sample.md" --title "sample"
-    run "${_NB}" notebooks add "example"
+    "${_NB}" init
+    "${_NB}" add "sample.md" --title "sample"
+    "${_NB}" notebooks add "example"
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show example --path
@@ -1121,11 +1121,11 @@ load test_helper
 
 @test "'show <selector> --id' with <selector> matching notebook name and note prints id." {
   {
-    run "${_NB}" init
-    run "${_NB}" add "example.md" --title "example"
-    run "${_NB}" notebooks add "example"
+    "${_NB}" init
+    "${_NB}" add "example.md" --title "example"
+    "${_NB}" notebooks add "example"
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show example.md --id
@@ -1139,11 +1139,11 @@ load test_helper
 
 @test "'show <selector> --id' with <selector> only matching notebook name prints message." {
   {
-    run "${_NB}" init
-    run "${_NB}" add "sample.md" --title "sample"
-    run "${_NB}" notebooks add "example"
+    "${_NB}" init
+    "${_NB}" add "sample.md" --title "sample"
+    "${_NB}" notebooks add "example"
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show example --id
@@ -1157,11 +1157,11 @@ load test_helper
 
 @test "'show <selector> --title' with <selector> matching notebook name and note prints title." {
   {
-    run "${_NB}" init
-    run "${_NB}" add "example.md" --title "example"
-    run "${_NB}" notebooks add "example"
+    "${_NB}" init
+    "${_NB}" add "example.md" --title "example"
+    "${_NB}" notebooks add "example"
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show example --title
@@ -1175,11 +1175,11 @@ load test_helper
 
 @test "'show <selector> --title' with <selector> only matching notebook name prints message." {
   {
-    run "${_NB}" init
-    run "${_NB}" add "sample.md" --title "sample"
-    run "${_NB}" notebooks add "example"
+    "${_NB}" init
+    "${_NB}" add "sample.md" --title "sample"
+    "${_NB}" notebooks add "example"
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show example --title
@@ -1193,11 +1193,11 @@ load test_helper
 
 @test "'show <selector> --selector-id' with <selector> matching notebook name and note prints selector-id." {
   {
-    run "${_NB}" init
-    run "${_NB}" add "example.md" --title "example"
-    run "${_NB}" notebooks add "example"
+    "${_NB}" init
+    "${_NB}" add "example.md" --title "example"
+    "${_NB}" notebooks add "example"
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show example --selector-id
@@ -1211,11 +1211,11 @@ load test_helper
 
 @test "'show <selector> --selector-id' with <selector> only matching notebook name prints selector id." {
   {
-    run "${_NB}" init
-    run "${_NB}" add "sample.md" --title "sample"
-    run "${_NB}" notebooks add "example"
+    "${_NB}" init
+    "${_NB}" add "sample.md" --title "sample"
+    "${_NB}" notebooks add "example"
 
-    _files=($(ls "${_NOTEBOOK_PATH}/")) && _filename="${_files[0]}"
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
   }
 
   run "${_NB}" show example --selector-id
