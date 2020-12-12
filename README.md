@@ -41,7 +41,7 @@ any standard Linux / Unix environment, including macOS and Windows via WSL.
 but `nb` works great without them.
 
 <p align="center">
-  <img  src="https://xwmx.github.io/misc/nb/images/nb-theme-nb-home.png"
+  <img  src="https://xwmx.github.io/misc/nb/images/nb-theme-nb-home.png?v=3"
         alt="home"
         width="450">
 </p>
@@ -59,7 +59,7 @@ Page information is automatically downloaded, compiled, and saved into normal Ma
 documents made for humans, so bookmarks are easy to edit just like any other note.
 
 <p align="center">
-  <img  src="https://xwmx.github.io/misc/nb/images/nb-theme-raspberry-bookmarks.png"
+  <img  src="https://xwmx.github.io/misc/nb/images/nb-theme-raspberry-bookmarks.png?v=3"
         alt="bookmarks"
         width="450">
 </p>
@@ -71,7 +71,7 @@ syncing utility like Dropbox so notes can be edited in other apps
 on any device.
 
 <p align="center">
-  <img  src="https://xwmx.github.io/misc/nb/images/nb-theme-console-empty.png"
+  <img  src="https://xwmx.github.io/misc/nb/images/nb-theme-console-empty.png?v=3"
         alt="welcome"
         width="450">
 </p>
@@ -174,6 +174,7 @@ Also supported for various enhancements:
 [Pygments](https://pygments.org/),
 [Ranger](https://ranger.github.io/),
 [readability-cli](https://gitlab.com/gardenappl/readability-cli),
+[`rga` / ripgrep-all](https://github.com/phiresky/ripgrep-all),
 [`termpdf.py`](https://github.com/dsanson/termpdf.py),
 [vifm](https://vifm.info/)
 
@@ -1592,7 +1593,8 @@ the `-l` or `--list` option:
 [2718] example.md "Example Note"
 ```
 
-`nb search` looks for [`rg`](https://github.com/BurntSushi/ripgrep),
+`nb search` looks for [`rga`](https://github.com/phiresky/ripgrep-all),
+[`rg`](https://github.com/BurntSushi/ripgrep),
 [`ag`](https://github.com/ggreer/the_silver_searcher),
 [`ack`](https://beyondgrep.com/), and
 [`grep`](https://en.wikipedia.org/wiki/Grep), in that order, and
@@ -2393,67 +2395,67 @@ nb set color_theme
 
 ##### `blacklight`
 
-| ![blacklight](https://xwmx.github.io/misc/nb/images/nb-theme-blacklight-home.png)  |  ![blacklight](https://xwmx.github.io/misc/nb/images/nb-theme-blacklight-bookmarks.png)
+| ![blacklight](https://xwmx.github.io/misc/nb/images/nb-theme-blacklight-home.png?v=3)  |  ![blacklight](https://xwmx.github.io/misc/nb/images/nb-theme-blacklight-bookmarks.png?v=3)
 |:--:|:--:|
 |    |    |
 
 ##### `console`
 
-| ![console](https://xwmx.github.io/misc/nb/images/nb-theme-console-home.png)  |  ![console](https://xwmx.github.io/misc/nb/images/nb-theme-console-bookmarks.png) |
+| ![console](https://xwmx.github.io/misc/nb/images/nb-theme-console-home.png?v=3)  |  ![console](https://xwmx.github.io/misc/nb/images/nb-theme-console-bookmarks.png?v=3) |
 |:--:|:--:|
 |    |    |
 
 ##### `desert`
 
-| ![desert](https://xwmx.github.io/misc/nb/images/nb-theme-desert-home.png)  |  ![desert](https://xwmx.github.io/misc/nb/images/nb-theme-desert-bookmarks.png) |
+| ![desert](https://xwmx.github.io/misc/nb/images/nb-theme-desert-home.png?v=3)  |  ![desert](https://xwmx.github.io/misc/nb/images/nb-theme-desert-bookmarks.png?v=3) |
 |:--:|:--:|
 |    |    |
 
 ##### `electro`
 
-| ![electro](https://xwmx.github.io/misc/nb/images/nb-theme-electro-home.png)  |  ![electro](https://xwmx.github.io/misc/nb/images/nb-theme-electro-bookmarks.png) |
+| ![electro](https://xwmx.github.io/misc/nb/images/nb-theme-electro-home.png?v=3)  |  ![electro](https://xwmx.github.io/misc/nb/images/nb-theme-electro-bookmarks.png?v=3) |
 |:--:|:--:|
 |    |    |
 
 ##### `forest`
 
-| ![forest](https://xwmx.github.io/misc/nb/images/nb-theme-forest-home.png)  |  ![forest](https://xwmx.github.io/misc/nb/images/nb-theme-forest-bookmarks.png) |
+| ![forest](https://xwmx.github.io/misc/nb/images/nb-theme-forest-home.png?v=3)  |  ![forest](https://xwmx.github.io/misc/nb/images/nb-theme-forest-bookmarks.png?v=3) |
 |:--:|:--:|
 |    |    |
 
 ##### `nb` (default)
 
-| ![nb](https://xwmx.github.io/misc/nb/images/nb-theme-nb-home.png)  |  ![nb](https://xwmx.github.io/misc/nb/images/nb-theme-nb-bookmarks.png) |
+| ![nb](https://xwmx.github.io/misc/nb/images/nb-theme-nb-home.png?v=3)  |  ![nb](https://xwmx.github.io/misc/nb/images/nb-theme-nb-bookmarks.png?v=3) |
 |:--:|:--:|
 |    |    |
 
 ##### `ocean`
 
-| ![ocean](https://xwmx.github.io/misc/nb/images/nb-theme-ocean-home.png)  |  ![ocean](https://xwmx.github.io/misc/nb/images/nb-theme-ocean-bookmarks.png) |
+| ![ocean](https://xwmx.github.io/misc/nb/images/nb-theme-ocean-home.png?v=3)  |  ![ocean](https://xwmx.github.io/misc/nb/images/nb-theme-ocean-bookmarks.png?v=3) |
 |:--:|:--:|
 |    |    |
 
 ##### `raspberry`
 
-| ![raspberry](https://xwmx.github.io/misc/nb/images/nb-theme-raspberry-home.png)  |  ![raspberry](https://xwmx.github.io/misc/nb/images/nb-theme-raspberry-bookmarks.png) |
+| ![raspberry](https://xwmx.github.io/misc/nb/images/nb-theme-raspberry-home.png?v=3)  |  ![raspberry](https://xwmx.github.io/misc/nb/images/nb-theme-raspberry-bookmarks.png?v=3) |
 |:--:|:--:|
 |    |    |
 
 ##### `smoke`
 
-| ![smoke](https://xwmx.github.io/misc/nb/images/nb-theme-monochrome-home.png)  |  ![smoke](https://xwmx.github.io/misc/nb/images/nb-theme-monochrome-bookmarks.png) |
+| ![smoke](https://xwmx.github.io/misc/nb/images/nb-theme-monochrome-home.png?v=3)  |  ![smoke](https://xwmx.github.io/misc/nb/images/nb-theme-monochrome-bookmarks.png?v=3) |
 |:--:|:--:|
 |    |    |
 
 ##### `unicorn`
 
-| ![unicorn](https://xwmx.github.io/misc/nb/images/nb-theme-unicorn-home.png)  |  ![unicorn](https://xwmx.github.io/misc/nb/images/nb-theme-unicorn-bookmarks.png) |
+| ![unicorn](https://xwmx.github.io/misc/nb/images/nb-theme-unicorn-home.png?v=3)  |  ![unicorn](https://xwmx.github.io/misc/nb/images/nb-theme-unicorn-bookmarks.png?v=3) |
 |:--:|:--:|
 |    |    |
 
 ##### `utility`
 
-| ![utility](https://xwmx.github.io/misc/nb/images/nb-theme-utility-home.png)  |  ![utility](https://xwmx.github.io/misc/nb/images/nb-theme-utility-bookmarks.png) |
+| ![utility](https://xwmx.github.io/misc/nb/images/nb-theme-utility-home.png?v=3)  |  ![utility](https://xwmx.github.io/misc/nb/images/nb-theme-utility-bookmarks.png?v=3) |
 |:--:|:--:|
 |    |    |
 
@@ -3984,10 +3986,11 @@ Options:
                                 video, audio, folder, text
 Description:
   Search notes. Uses the first available tool in the following list:
-    1. `rg`    https://github.com/BurntSushi/ripgrep
-    2. `ag`    https://github.com/ggreer/the_silver_searcher
-    3. `ack`   https://beyondgrep.com/
-    4. `grep`  https://en.wikipedia.org/wiki/Grep
+    1. `rga`   https://github.com/phiresky/ripgrep-all
+    2. `rg`    https://github.com/BurntSushi/ripgrep
+    3. `ag`    https://github.com/ggreer/the_silver_searcher
+    4. `ack`   https://beyondgrep.com/
+    5. `grep`  https://en.wikipedia.org/wiki/Grep
 
 Examples:
   # search current notebook for "example query"
