@@ -52,6 +52,273 @@ load test_helper
   [[ "${lines[1]}" =~ \ \ nb\ edit  ]]
 }
 
+# --content option ############################################################
+
+@test "'edit' with --content option appends new content." {
+  {
+    "${_NB}" init
+    "${_NB}" add --title "Example Title" --content "Example initial content."
+  }
+
+  run "${_NB}" edit 1 --content "Example new content."
+
+  printf "\${status}: '%s'\\n" "${status}"
+  printf "\${output}: '%s'\\n" "${output}"
+
+  # Returns status 0:
+
+  [[ "${status}" -eq 0 ]]
+
+  # Updates note file:
+
+  diff                                        \
+    <(cat "${NB_DIR}/home/example_title.md")  \
+    <(cat <<HEREDOC
+# Example Title
+
+Example initial content.
+
+Example new content.
+HEREDOC
+)
+
+  # Creates git commit:
+
+  cd "${NB_DIR}/home" || return 1
+
+  printf "git log --stat:\\n%s\\n" "$(git log --stat)"
+
+  while [[ -n "$(git status --porcelain)" ]]
+  do
+    sleep 1
+  done
+  git log | grep -q '\[nb\] Edit'
+
+  # Prints output:
+
+  [[ "${lines[0]}" =~ Updated:\ .*[.*1.*].*\ .*example_title.md.*\ \"Example\ Title\" ]]
+}
+
+@test "'edit' with empty --content option exits with 1" {
+  {
+    "${_NB}" init
+    "${_NB}" add "Example initial content."
+
+    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
+    _original="$(cat "${NB_DIR}/home/${_filename}")"
+
+    [[ ! "$(cat "${NB_DIR}/home/${_filename}")" =~ mock_editor ]]
+  }
+
+  run "${_NB}" edit 1 --content
+
+  printf "\${status}: '%s'\\n" "${status}"
+  printf "\${output}: '%s'\\n" "${output}"
+
+  # Exits with status 1:
+
+  [[ ${status} -eq 1 ]]
+
+  # Does not update note file:
+
+  printf "cat %s:\\n%s\\n" "${NB_DIR}/home/${_filename}" \
+    "$(cat "${NB_DIR}/home/${_filename}")"
+
+  [[ ! "$(cat "${NB_DIR}/home/${_filename}")" =~ mock_editor   ]]
+
+  diff <(cat "${NB_DIR}/home/${_filename}") <(printf "%s\\n" "${_original}")
+
+  # Prints error message:
+
+  [[ "${output}" =~ requires\ a\ valid\ argument ]]
+}
+
+# --overwite & --prepend  #####################################################
+
+@test "'edit --prepend --content <content>' prepends <content> to file." {
+  {
+    "${_NB}" init
+    "${_NB}" add                        \
+      --filename "Example Filename.md"  \
+      --content  "Example initial content."
+  }
+
+  run "${_NB}" edit 1 --prepend --content "Example new content."
+
+  printf "\${status}: '%s'\\n" "${status}"
+  printf "\${output}: '%s'\\n" "${output}"
+
+  # Returns status 0:
+
+  [[ "${status}" -eq 0 ]]
+
+  # Updates file:
+
+  diff                                          \
+    <(cat "${NB_DIR}/home/Example Filename.md") \
+    <(cat <<HEREDOC
+Example new content.
+
+Example initial content.
+HEREDOC
+)
+
+  # Creates git commit:
+
+  cd "${NB_DIR}/home" || return 1
+
+  printf "git log --stat:\\n%s\\n" "$(git log --stat)"
+
+  while [[ -n "$(git status --porcelain)" ]]
+  do
+    sleep 1
+  done
+  git log | grep -q '\[nb\] Edit'
+
+  # Prints output:
+
+  [[ "${output}" =~ Updated:                ]]
+  [[ "${output}" =~ [0-9]+                  ]]
+  [[ "${output}" =~ Example\\\ Filename.md  ]]
+}
+
+@test "'edit --prepend' prepends standard input to file." {
+  {
+    "${_NB}" init
+    "${_NB}" add                        \
+      --filename "Example Filename.md"  \
+      --content  "Example initial content."
+  }
+
+  run bash -c "echo '## Piped Content' | ${_NB} edit 1 --prepend"
+
+  printf "\${status}: '%s'\\n" "${status}"
+  printf "\${output}: '%s'\\n" "${output}"
+
+  # Returns status 0:
+
+  [[ "${status}" -eq 0 ]]
+
+  # Updates file:
+
+  diff                                          \
+    <(cat "${NB_DIR}/home/Example Filename.md") \
+    <(cat <<HEREDOC
+## Piped Content
+
+Example initial content.
+HEREDOC
+)
+
+  # Creates git commit:
+
+  cd "${NB_DIR}/home" || return 1
+
+  printf "git log --stat:\\n%s\\n" "$(git log --stat)"
+
+  while [[ -n "$(git status --porcelain)" ]]
+  do
+    sleep 1
+  done
+  git log | grep -q '\[nb\] Edit'
+
+  # Prints output:
+
+  [[ "${output}" =~ Updated:                ]]
+  [[ "${output}" =~ [0-9]+                  ]]
+  [[ "${output}" =~ Example\\\ Filename.md  ]]
+}
+
+@test "'edit --overwrite --content <content>' overwrites existing file content with content." {
+  {
+    "${_NB}" init
+    "${_NB}" add                        \
+      --filename "Example Filename.md"  \
+      --content  "Example initial content."
+  }
+
+  run "${_NB}" edit 1 --overwrite --content "Example new content."
+
+  printf "\${status}: '%s'\\n" "${status}"
+  printf "\${output}: '%s'\\n" "${output}"
+
+  # Returns status 0:
+
+  [[ "${status}" -eq 0 ]]
+
+  # Updates file:
+
+  diff \
+    <(cat "${NB_DIR}/home/Example Filename.md") \
+    <(cat <<HEREDOC
+Example new content.
+HEREDOC
+)
+
+  # Creates git commit:
+
+  cd "${NB_DIR}/home" || return 1
+
+  printf "git log --stat:\\n%s\\n" "$(git log --stat)"
+
+  while [[ -n "$(git status --porcelain)" ]]
+  do
+    sleep 1
+  done
+  git log | grep -q '\[nb\] Edit'
+
+  # Prints output:
+
+  [[ "${output}" =~ Updated:                ]]
+  [[ "${output}" =~ [0-9]+                  ]]
+  [[ "${output}" =~ Example\\\ Filename.md  ]]
+}
+
+@test "'edit --overwrite' overwrites existing content with standard input." {
+  {
+    "${_NB}" init
+    "${_NB}" add                        \
+      --filename "Example Filename.md"  \
+      --content  "Example initial content."
+  }
+
+  run bash -c "echo '## Piped Content' | ${_NB} edit 1 --overwrite"
+
+  printf "\${status}: '%s'\\n" "${status}"
+  printf "\${output}: '%s'\\n" "${output}"
+
+  # Returns status 0:
+
+  [[ "${status}" -eq 0 ]]
+
+  # Updates file:
+
+  diff \
+    <(cat "${NB_DIR}/home/Example Filename.md") \
+    <(cat <<HEREDOC
+## Piped Content
+HEREDOC
+)
+
+  # Creates git commit:
+
+  cd "${NB_DIR}/home" || return 1
+
+  printf "git log --stat:\\n%s\\n" "$(git log --stat)"
+
+  while [[ -n "$(git status --porcelain)" ]]
+  do
+    sleep 1
+  done
+  git log | grep -q '\[nb\] Edit'
+
+  # Prints output:
+
+  [[ "${output}" =~ Updated:                ]]
+  [[ "${output}" =~ [0-9]+                  ]]
+  [[ "${output}" =~ Example\\\ Filename.md  ]]
+}
+
 # <selector> ##################################################################
 
 @test "'edit <selector>' with empty repo exits with 1 and prints message." {
@@ -572,85 +839,6 @@ load test_helper
   [[ "${output}" =~ Updated:        ]]
   [[ "${output}" =~ [0-9]+          ]]
   [[ "${output}" =~ [A-Za-z0-9]+.md ]]
-}
-
-# --content option ############################################################
-
-@test "'edit' with --content option edits without errors." {
-  {
-    "${_NB}" init
-    "${_NB}" add
-
-    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
-  }
-
-  run "${_NB}" edit 1 --content "Example content."
-
-  printf "\${status}: '%s'\\n" "${status}"
-  printf "\${output}: '%s'\\n" "${output}"
-
-  # Returns status 0:
-
-  [[ ${status} -eq 0 ]]
-
-  # Updates note file:
-
-  printf "cat %s:\\n%s\\n" "${NB_DIR}/home/${_filename}" \
-    "$(cat "${NB_DIR}/home/${_filename}")"
-
-  [[ "$(cat "${NB_DIR}/home/${_filename}")" =~ Example\ content\.  ]]
-
-  # Creates git commit:
-
-  cd "${NB_DIR}/home" || return 1
-
-  printf "git log --stat:\\n%s\\n" "$(git log --stat)"
-
-  while [[ -n "$(git status --porcelain)" ]]
-  do
-    sleep 1
-  done
-  git log | grep -q '\[nb\] Edit'
-
-  # Prints output:
-
-  [[ "${output}" =~ Updated:        ]]
-  [[ "${output}" =~ [0-9]+          ]]
-  [[ "${output}" =~ [A-Za-z0-9]+.md ]]
-}
-
-@test "'edit' with empty --content option exits with 1" {
-  {
-    "${_NB}" init
-    "${_NB}" add "Example initial content."
-
-    _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
-    _original="$(cat "${NB_DIR}/home/${_filename}")"
-
-    [[ ! "$(cat "${NB_DIR}/home/${_filename}")" =~ mock_editor ]]
-  }
-
-  run "${_NB}" edit 1 --content
-
-  printf "\${status}: '%s'\\n" "${status}"
-  printf "\${output}: '%s'\\n" "${output}"
-
-  # Exits with status 1:
-
-  [[ ${status} -eq 1 ]]
-
-  # Does not update note file:
-
-  printf "cat %s:\\n%s\\n" "${NB_DIR}/home/${_filename}" \
-    "$(cat "${NB_DIR}/home/${_filename}")"
-
-  [[ ! "$(cat "${NB_DIR}/home/${_filename}")" =~ mock_editor   ]]
-
-  diff <(cat "${NB_DIR}/home/${_filename}") <(printf "%s\\n" "${_original}")
-
-  # Prints error message:
-
-  [[ "${output}" =~ requires\ a\ valid\ argument ]]
 }
 
 # encrypted ###################################################################

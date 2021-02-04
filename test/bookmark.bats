@@ -7,6 +7,8 @@ load test_helper
 @test "'bookmark' with no argument exits with 0, prints message, and lists." {
   {
     "${_NB}" init
+    "${_NB}" add "Bookmark One.bookmark.md" -c "<${_BOOKMARK_URL}>"
+    "${_NB}" add "Bookmark Two.bookmark.md" -c "<${_BOOKMARK_URL}>"
   }
 
   run "${_NB}" bookmark
@@ -14,23 +16,233 @@ load test_helper
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
 
-  # Exits with status 0
-  [[ ${status} -eq 0          ]]
+  # exits with status 0
 
-  # Does not create note file
+  [[ "${status}" -eq 0          ]]
+
+  # does not create new file
+
   _files=($(ls "${NB_DIR}/home/"))
-  [[ "${#_files[@]}" -eq 0    ]]
 
-  # Does not create git commit
+  [[ "${#_files[@]}" -eq 2    ]]
+
+  # does not create git commit
+
+  cd "${NB_DIR}/home" || return 1
+
+  while [[ -n "$(git status --porcelain)" ]]
+  do
+    sleep 1
+  done
+
+  ! git log | grep -q '\[nb\] Add'
+
+  # prints output
+
+  [[ "${lines[0]}" =~ ^Add:\ .*nb\ \<url\>.*\ Help:\ .*nb\ help\ bookmark ]]
+  [[ "${lines[1]}" =~ [^-]------------------------------------[^-]        ]]
+}
+
+@test "'<notebook>:bookmark' with no argument exits with 0, prints message, and lists with selector in header." {
+  {
+    "${_NB}" init
+
+    "${_NB}" notebooks add "Example Notebook"
+
+    "${_NB}" add                                  \
+      "Example Notebook:Bookmark One.bookmark.md" \
+      -c "<${_BOOKMARK_URL}>"
+
+    "${_NB}" add                                  \
+      "Example Notebook:Bookmark Two.bookmark.md" \
+      -c "<${_BOOKMARK_URL}>"
+  }
+
+  run "${_NB}" Example\ Notebook:bookmark
+
+  printf "\${status}: '%s'\\n" "${status}"
+  printf "\${output}: '%s'\\n" "${output}"
+
+  # exits with status 0
+
+  [[ "${status}" -eq 0      ]]
+
+  # does not create new file
+
+  [[ -z "$(ls "${NB_DIR}/home/")" ]]
+
+  # does not create git commit
+
+  cd "${NB_DIR}/home" || return 1
+
+  while [[ -n "$(git status --porcelain)" ]]
+  do
+    sleep 1
+  done
+
+  ! git log | grep -q '\[nb\] Add'
+
+  # prints output
+
+  [[ "${lines[0]}" =~ \
+        ^Add:\ .*nb\ Example\\\ Notebook:\ \<url\>.*\ Help:\ .*nb\ help\ bookmark ]]
+  [[ "${lines[1]}" =~ \
+        [^-]-------------------------------------------------------[^-]           ]]
+}
+
+# --tags option ###############################################################
+
+@test "'bookmark' with --tags and no argument exits with 1 and prints message." {
+  {
+    "${_NB}" init
+  }
+
+  run "${_NB}" bookmark "${_BOOKMARK_URL}" --tags --filename "example"
+
+  printf "\${status}: '%s'\\n" "${status}"
+  printf "\${output}: '%s'\\n" "${output}"
+
+  # Returns status 1:
+
+  [[ "${status}" -eq 1 ]]
+
+  # Does not create new bookmark file:
+
+  [[ ! -f "${NB_DIR}/home/example.bookmark.md" ]]
+
+  # Prints output:
+
+  [[ "${lines[0]}" =~ !.*\ .*--tags.*\ requires\ a\ valid\ argument. ]]
+}
+
+@test "'bookmark' with --tags option creates new bookmark with tags." {
+  {
+    "${_NB}" init
+  }
+
+  run "${_NB}" bookmark "${_BOOKMARK_URL}" --tags tag1,tag2 --filename "example"
+
+  printf "\${status}: '%s'\\n" "${status}"
+  printf "\${output}: '%s'\\n" "${output}"
+
+  # Returns status 0:
+
+  [[ "${status}" -eq 0 ]]
+
+  # Creates new bookmark file with content:
+
+  [[ -f "${NB_DIR}/home/example.bookmark.md" ]]
+
+  diff                                          \
+    <(cat "${NB_DIR}/home/example.bookmark.md") \
+    <(cat <<HEREDOC
+# Example Domain
+
+<file://${NB_TEST_BASE_PATH}/fixtures/example.com.html>
+
+## Description
+
+Example description.
+
+## Tags
+
+#tag1 #tag2
+
+## Content
+
+$(cat "${NB_TEST_BASE_PATH}/fixtures/example.com.md")
+HEREDOC
+)
+
+  # Creates git commit:
+
   cd "${NB_DIR}/home" || return 1
   while [[ -n "$(git status --porcelain)" ]]
   do
     sleep 1
   done
-  ! git log | grep -q '\[nb\] Add'
+  git log | grep -q '\[nb\] Add'
 
-  # Prints help information
-  [[ "${lines[0]}" =~ ^Add\:  ]]
+  # Adds to index:
+
+  [[ -e "${NB_DIR}/home/.index" ]]
+
+  diff                      \
+    <(ls "${NB_DIR}/home")  \
+    <(cat "${NB_DIR}/home/.index")
+
+  # Prints output:
+
+  [[ "${lines[0]}" =~ Added:\ .*[.*1.*].*\ .*example.bookmark.md ]]
+}
+
+@test "'bookmark' with --tags option and hashtags creates new bookmark with tags." {
+  {
+    "${_NB}" init
+  }
+
+  run "${_NB}" bookmark     \
+    "${_BOOKMARK_URL}"      \
+    --tags '#tag1','#tag2'  \
+    -c "Example comment."   \
+    --filename "example"
+
+  printf "\${status}: '%s'\\n" "${status}"
+  printf "\${output}: '%s'\\n" "${output}"
+
+  # Returns status 0:
+
+  [[ "${status}" -eq 0 ]]
+
+  # Creates new bookmark file with content:
+
+  [[ -f "${NB_DIR}/home/example.bookmark.md" ]]
+
+  diff                                          \
+    <(cat "${NB_DIR}/home/example.bookmark.md") \
+    <(cat <<HEREDOC
+# Example Domain
+
+<file://${NB_TEST_BASE_PATH}/fixtures/example.com.html>
+
+## Description
+
+Example description.
+
+## Comment
+
+Example comment.
+
+## Tags
+
+#tag1 #tag2
+
+## Content
+
+$(cat "${NB_TEST_BASE_PATH}/fixtures/example.com.md")
+HEREDOC
+)
+
+  # Creates git commit:
+
+  cd "${NB_DIR}/home" || return 1
+  while [[ -n "$(git status --porcelain)" ]]
+  do
+    sleep 1
+  done
+  git log | grep -q '\[nb\] Add'
+
+  # Adds to index:
+
+  [[ -e "${NB_DIR}/home/.index" ]]
+
+  diff                      \
+    <(ls "${NB_DIR}/home")  \
+    <(cat "${NB_DIR}/home/.index")
+
+  # Prints output:
+
+  [[ "${lines[0]}" =~ Added:\ .*[.*1.*].*\ .*example.bookmark.md ]]
 }
 
 # <url> or <list option...> argument ##########################################
@@ -528,128 +740,6 @@ $(cat "${NB_TEST_BASE_PATH}/fixtures/example.com.html")
 ## Description
 
 Example description."
-
-  printf "cat file: '%s'\\n" "$(cat "${NB_DIR}/home/${_filename}")"
-  printf "\${_bookmark_content}: '%s'\\n" "${_bookmark_content}"
-
-  [[ "$(cat "${NB_DIR}/home/${_filename}")" == "${_bookmark_content}" ]]
-  grep -q '# Example Domain' "${NB_DIR}/home"/*
-
-  # Creates git commit
-  cd "${NB_DIR}/home" || return 1
-  while [[ -n "$(git status --porcelain)" ]]
-  do
-    sleep 1
-  done
-  git log | grep -q '\[nb\] Add'
-
-  # Adds to index
-  [[ -e "${NB_DIR}/home/.index"                                   ]]
-  [[ "$(ls "${NB_DIR}/home")" == "$(cat "${NB_DIR}/home/.index")" ]]
-
-  # Prints output
-  [[ "${output}" =~ Added:                    ]]
-  [[ "${output}" =~ [0-9]+                    ]]
-  [[ "${output}" =~ [A-Za-z0-9]+.bookmark.md  ]]
-}
-
-# --tags option ###############################################################
-
-@test "'bookmark' with --tags option creates new note with tags." {
-  {
-    "${_NB}" init
-  }
-
-  run "${_NB}" bookmark "${_BOOKMARK_URL}" --tags tag1,tag2
-
-  printf "\${status}: '%s'\\n" "${status}"
-  printf "\${output}: '%s'\\n" "${output}"
-
-  # Returns status 0
-  [[ ${status} -eq 0 ]]
-
-  # Creates new note file with content
-  _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
-  [[ "${#_files[@]}" -eq 1 ]]
-
-  _bookmark_content="\
-# Example Domain
-
-<file://${NB_TEST_BASE_PATH}/fixtures/example.com.html>
-
-## Description
-
-Example description.
-
-## Tags
-
-#tag1 #tag2
-
-## Content
-
-$(cat "${NB_TEST_BASE_PATH}/fixtures/example.com.md")"
-
-  printf "cat file: '%s'\\n" "$(cat "${NB_DIR}/home/${_filename}")"
-  printf "\${_bookmark_content}: '%s'\\n" "${_bookmark_content}"
-
-  [[ "$(cat "${NB_DIR}/home/${_filename}")" == "${_bookmark_content}" ]]
-  grep -q '# Example Domain' "${NB_DIR}/home"/*
-
-  # Creates git commit
-  cd "${NB_DIR}/home" || return 1
-  while [[ -n "$(git status --porcelain)" ]]
-  do
-    sleep 1
-  done
-  git log | grep -q '\[nb\] Add'
-
-  # Adds to index
-  [[ -e "${NB_DIR}/home/.index"                                   ]]
-  [[ "$(ls "${NB_DIR}/home")" == "$(cat "${NB_DIR}/home/.index")" ]]
-
-  # Prints output
-  [[ "${output}" =~ Added:                    ]]
-  [[ "${output}" =~ [0-9]+                    ]]
-  [[ "${output}" =~ [A-Za-z0-9]+.bookmark.md  ]]
-}
-
-@test "'bookmark' with --tags option and hashtags creates new note with tags." {
-  {
-    "${_NB}" init
-  }
-
-  run "${_NB}" bookmark "${_BOOKMARK_URL}" --tags '#tag1','#tag2' -c 'Example comment.'
-
-  printf "\${status}: '%s'\\n" "${status}"
-  printf "\${output}: '%s'\\n" "${output}"
-
-  # Returns status 0
-  [[ ${status} -eq 0 ]]
-
-  # Creates new note file with content
-  _files=($(ls "${NB_DIR}/home/")) && _filename="${_files[0]}"
-  [[ "${#_files[@]}" -eq 1 ]]
-
-  _bookmark_content="\
-# Example Domain
-
-<file://${NB_TEST_BASE_PATH}/fixtures/example.com.html>
-
-## Description
-
-Example description.
-
-## Comment
-
-Example comment.
-
-## Tags
-
-#tag1 #tag2
-
-## Content
-
-$(cat "${NB_TEST_BASE_PATH}/fixtures/example.com.md")"
 
   printf "cat file: '%s'\\n" "$(cat "${NB_DIR}/home/${_filename}")"
   printf "\${_bookmark_content}: '%s'\\n" "${_bookmark_content}"

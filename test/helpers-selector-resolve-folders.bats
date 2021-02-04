@@ -2,9 +2,40 @@
 
 load test_helper
 
+# conflicting id / name #######################################################
+
+@test "'_resolve_selector_folders()' favors id with conflicting id and folder name." {
+  {
+    "${_NB}" init
+    "${_NB}" add "Example Folder" --type folder
+    "${_NB}" add "Sample Folder"  --type folder
+
+    "${_NB}" move "Sample Folder" "1" --force
+
+    [[ -d "${NB_DIR}/home/Example Folder" ]]
+    [[ -d "${NB_DIR}/home/1"              ]]
+  }
+
+  run "${_NB}" helpers resolve_selector_folders 1/
+
+  printf "\${status}: '%s'\\n" "${status}"
+  printf "\${output}: '%s'\\n" "${output}"
+
+  [[ "${status}"  -eq 0                 ]]
+  [[ "${output}"  ==  "Example Folder"  ]]
+
+  run "${_NB}" helpers resolve_selector_folders 2/
+
+  printf "\${status}: '%s'\\n" "${status}"
+  printf "\${output}: '%s'\\n" "${output}"
+
+  [[ "${status}"  -eq 0                 ]]
+  [[ "${output}"  ==  "1"               ]]
+}
+
 # _resolve_selector_folders() (error handling) ################################
 
-@test "'_resolve_selector_folders()' return error message with not-valid path." {
+@test "'_resolve_selector_folders()' returns error with not-valid path." {
   {
     "${_NB}" init
     "${_NB}" add "A Folder" --type folder
@@ -22,11 +53,12 @@ load test_helper
   printf "\${output}: '%s'\\n" "${output}"
 
   [[    "${status}"   -eq 1               ]]
-  [[    "${lines[0]}" =~  Not\ a\ folder: ]]
-  [[    "${lines[0]}" =~  not-valid       ]]
+  [[ -z "${output}"                       ]]
+  # [[    "${lines[0]}" =~  Not\ a\ folder: ]]
+  # [[    "${lines[0]}" =~  not-valid       ]]
 }
 
-@test "'_resolve_selector_folders()' return error message with double not-valid two-level path." {
+@test "'_resolve_selector_folders()' returns error with double not-valid two-level path." {
   {
     "${_NB}" init
     "${_NB}" add "A Folder" --type folder
@@ -44,11 +76,12 @@ load test_helper
   printf "\${output}: '%s'\\n" "${output}"
 
   [[    "${status}"   -eq 1               ]]
-  [[    "${lines[0]}" =~  Not\ a\ folder: ]]
-  [[    "${lines[0]}" =~  not-valid       ]]
+  [[ -z "${output}"                       ]]
+  # [[    "${lines[0]}" =~  Not\ a\ folder: ]]
+  # [[    "${lines[0]}" =~  not-valid       ]]
 }
 
-@test "'_resolve_selector_folders()' return error message with second-level not-valid two-level path." {
+@test "'_resolve_selector_folders()' returns error with second-level not-valid two-level path." {
   {
     "${_NB}" init
     "${_NB}" add "A Folder" --type folder
@@ -66,11 +99,12 @@ load test_helper
   printf "\${output}: '%s'\\n" "${output}"
 
   [[    "${status}"   -eq 1               ]]
-  [[    "${lines[0]}" =~  Not\ a\ folder: ]]
-  [[    "${lines[0]}" =~  not-valid       ]]
+  [[ -z "${output}"                       ]]
+  # [[    "${lines[0]}" =~  Not\ a\ folder: ]]
+  # [[    "${lines[0]}" =~  not-valid       ]]
 }
 
-@test "'_resolve_selector_folders()' return error message with second-level not-valid id two-level path." {
+@test "'_resolve_selector_folders()' returns error with second-level not-valid id two-level path." {
   {
     "${_NB}" init
     "${_NB}" add "A Folder" --type folder
@@ -88,8 +122,9 @@ load test_helper
   printf "\${output}: '%s'\\n" "${output}"
 
   [[    "${status}"   -eq 1               ]]
-  [[    "${lines[0]}" =~  Not\ a\ folder: ]]
-  [[    "${lines[0]}" =~  99              ]]
+  [[ -z "${output}"                       ]]
+  # [[    "${lines[0]}" =~  Not\ a\ folder: ]]
+  # [[    "${lines[0]}" =~  99              ]]
 }
 
 # _resolve_selector_folders() (notebooks, folder and file ids) ################

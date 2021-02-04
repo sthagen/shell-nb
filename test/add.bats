@@ -3,6 +3,146 @@
 
 load test_helper
 
+# content #####################################################################
+
+@test "'add' with piped content includes content from --title and multiple --tags, --content, and arguments separated by newlines." {
+  skip "TODO"
+  {
+    "${_NB}" init
+  }
+
+  echo "Piped content." | {
+    run "${_NB}" add                  \
+      "Argument content one."         \
+      --tags    tag1,tag2             \
+      --title   "Example Title"       \
+      --content "Option content one." \
+      --tags    tag3,tag4             \
+      --content "Option content two." \
+      "Argument content two."
+
+    printf "\${status}: '%s'\\n" "${status}"
+    printf "\${output}: '%s'\\n" "${output}"
+
+    # Returns status 0:
+
+    [[ "${status}" -eq 0      ]]
+
+    # Creates new note file:
+
+    [[ -f "${NB_DIR}/home/example_title.markdown" ]]
+
+    diff                                              \
+      <(cat "${NB_DIR}/home/example_title.markdown")  \
+      <(cat <<HEREDOC
+# Example Title
+
+#tag1 #tag2 #tag3 #tag4
+
+Argument content one. Argument content two.
+
+Option content one.
+
+Option content two.
+
+Piped content.
+HEREDOC
+)
+
+    # Creates git commit:
+
+    cd "${NB_DIR}/home" || return 1
+    while [[ -n "$(git status --porcelain)" ]]
+    do
+      sleep 1
+    done
+    git log --stat
+    git log | grep -q '\[nb\] Add: example_title.markdown'
+
+    # Adds to index:
+
+    [[ -e "${NB_DIR}/home/.index" ]]
+
+    diff                      \
+      <(ls "${NB_DIR}/home")  \
+      <(cat "${NB_DIR}/home/.index")
+
+    # Prints output:
+
+    [[ "${lines[0]}" =~ Added:\ .*[.*1.*].*\ .*example_title.markdown.*\ \"Example\ Title\" ]]
+  }
+}
+
+@test "'add' with piped content includes content from --title and multiple --tags, --content, and arguments separated by newlines and a specified file extension." {
+  skip "TODO"
+
+  {
+    "${_NB}" init
+  }
+
+  echo "Piped content." | {
+    run "${_NB}" add                  \
+      "Argument content one."         \
+      --tags    tag1,tag2             \
+      --title   "Example Title"       \
+      --content "Option content one." \
+      --tags    tag3,tag4             \
+      --content "Option content two." \
+      "Argument content two."         \
+      --filename ".markdown"
+
+    printf "\${status}: '%s'\\n" "${status}"
+    printf "\${output}: '%s'\\n" "${output}"
+
+    # Returns status 0:
+
+    [[ "${status}" -eq 0      ]]
+
+    # Creates new note file:
+
+    [[ -f "${NB_DIR}/home/example_title.markdown" ]]
+
+    diff                                              \
+      <(cat "${NB_DIR}/home/example_title.markdown")  \
+      <(cat <<HEREDOC
+# Example Title
+
+#tag1 #tag2 #tag3 #tag4
+
+Argument content one. Argument content two.
+
+Option content one.
+
+Option content two.
+
+Piped content.
+HEREDOC
+)
+
+    # Creates git commit:
+
+    cd "${NB_DIR}/home" || return 1
+    while [[ -n "$(git status --porcelain)" ]]
+    do
+      sleep 1
+    done
+    git log --stat
+    git log | grep -q '\[nb\] Add: example_title.markdown'
+
+    # Adds to index:
+
+    [[ -e "${NB_DIR}/home/.index" ]]
+
+    diff                      \
+      <(ls "${NB_DIR}/home")  \
+      <(cat "${NB_DIR}/home/.index")
+
+    # Prints output:
+
+    [[ "${lines[0]}" =~ Added:\ .*[.*1.*].*\ .*example_title.markdown.*\ \"Example\ Title\" ]]
+  }
+}
+
 # no argument #################################################################
 
 @test "'add' with no arguments creates new note file created with \$EDITOR." {
@@ -17,7 +157,7 @@ load test_helper
 
   # Returns status 0:
 
-  [[ ${status} -eq 0        ]]
+  [[ "${status}" -eq 0      ]]
 
   # Creates a new note file with $EDITOR:
 
@@ -38,6 +178,387 @@ load test_helper
   git log | grep -q '\[nb\] Add'
 }
 
+# --tags option ###############################################################
+
+@test "'add --tags' with no argument exits with 1 and prints message." {
+  {
+    "${_NB}" init
+  }
+
+  run "${_NB}" add --tags --filename "example.md"
+
+  printf "\${status}: '%s'\\n" "${status}"
+  printf "\${output}: '%s'\\n" "${output}"
+
+  # Returns status 1:
+
+  [[ "${status}" -eq 1 ]]
+
+  # Does not create new note file with content:
+
+  [[ ! -f "${NB_DIR}/home/example.md" ]]
+
+  # Prints output:
+
+  [[ "${lines[0]}" =~ !.*\ .*--tags.*\ requires\ a\ valid\ argument. ]]
+}
+
+@test "'add --tags <tag-list>' creates new note with tags." {
+  {
+    "${_NB}" init
+  }
+
+  run "${_NB}" add            \
+    --tags    tag1,tag2       \
+    --title   "Example Title" \
+    --content "Example content."
+
+  printf "\${status}: '%s'\\n" "${status}"
+  printf "\${output}: '%s'\\n" "${output}"
+
+  # Returns status 0:
+
+  [[ "${status}" -eq 0 ]]
+
+  # Creates new note file with content:
+
+  [[ -f "${NB_DIR}/home/example_title.md" ]]
+
+  diff                                        \
+    <(cat "${NB_DIR}/home/example_title.md")  \
+    <(cat <<HEREDOC
+# Example Title
+
+#tag1 #tag2
+
+Example content.
+HEREDOC
+)
+
+  # Creates git commit:
+
+  cd "${NB_DIR}/home" || return 1
+  while [[ -n "$(git status --porcelain)" ]]
+  do
+    sleep 1
+  done
+  git log | grep -q '\[nb\] Add'
+
+  # Adds to index:
+
+  [[ -e "${NB_DIR}/home/.index" ]]
+
+  diff                      \
+    <(ls "${NB_DIR}/home")  \
+    <(cat "${NB_DIR}/home/.index")
+
+  # Prints output:
+
+  [[ "${lines[0]}" =~ Added:\ .*[.*1.*].*\ .*example_title.md ]]
+}
+
+@test "'add --tags <tag-list>' with tags formatted as hashtags creates new note with tags." {
+  {
+    "${_NB}" init
+  }
+
+  run "${_NB}" add              \
+    --tags    '#tag1','#tag2'   \
+    --title   "Example Title"   \
+    --content "Example content."
+
+  printf "\${status}: '%s'\\n" "${status}"
+  printf "\${output}: '%s'\\n" "${output}"
+
+  # Returns status 0:
+
+  [[ "${status}" -eq 0 ]]
+
+  # Creates new note file with content:
+
+  [[ -f "${NB_DIR}/home/example_title.md" ]]
+
+  diff                                        \
+    <(cat "${NB_DIR}/home/example_title.md")  \
+    <(cat <<HEREDOC
+# Example Title
+
+#tag1 #tag2
+
+Example content.
+HEREDOC
+)
+
+  # Creates git commit:
+
+  cd "${NB_DIR}/home" || return 1
+  while [[ -n "$(git status --porcelain)" ]]
+  do
+    sleep 1
+  done
+  git log | grep -q '\[nb\] Add'
+
+  # Adds to index:
+
+  [[ -e "${NB_DIR}/home/.index" ]]
+
+  diff                      \
+    <(ls "${NB_DIR}/home")  \
+    <(cat "${NB_DIR}/home/.index")
+
+  # Prints output:
+
+  [[ "${lines[0]}" =~ Added:\ .*[.*1.*].*\ .*example_title.md ]]
+}
+
+# piped #######################################################################
+
+@test "'add' with piped content includes content from --title, --tags, --content, and arguments separated by newlines." {
+  {
+    "${_NB}" init
+  }
+
+  echo "Piped content." | {
+    run "${_NB}" add  \
+      "Argument content one."     \
+      --tags    tag1,tag2         \
+      --title   "Example Title"   \
+      --content "Option content." \
+      "Argument content two."
+
+    printf "\${status}: '%s'\\n" "${status}"
+    printf "\${output}: '%s'\\n" "${output}"
+
+    # Returns status 0:
+
+    [[ "${status}" -eq 0      ]]
+
+    # Creates new note file:
+
+    [[ -f "${NB_DIR}/home/example_title.md" ]]
+
+    diff                                        \
+      <(cat "${NB_DIR}/home/example_title.md")  \
+      <(cat <<HEREDOC
+# Example Title
+
+#tag1 #tag2
+
+Argument content one. Argument content two.
+
+Option content.
+
+Piped content.
+HEREDOC
+)
+
+    # Creates git commit:
+
+    cd "${NB_DIR}/home" || return 1
+    while [[ -n "$(git status --porcelain)" ]]
+    do
+      sleep 1
+    done
+    git log --stat
+    git log | grep -q '\[nb\] Add: example_title.md'
+
+    # Adds to index:
+
+    [[ -e "${NB_DIR}/home/.index" ]]
+
+    diff                      \
+      <(ls "${NB_DIR}/home")  \
+      <(cat "${NB_DIR}/home/.index")
+
+    # Prints output:
+
+    [[ "${lines[0]}" =~ Added:\ .*[.*1.*].*\ .*example_title.md.*\ \"Example\ Title\" ]]
+  }
+}
+
+@test "'add' with piped content includes content from --title, and standard input separated by newlines." {
+  {
+    "${_NB}" init
+  }
+
+  run bash -c "echo 'Piped content.' | \"${_NB}\" add --title Example\ Title"
+
+  printf "\${status}: '%s'\\n" "${status}"
+  printf "\${output}: '%s'\\n" "${output}"
+
+  # Returns status 0:
+
+  [[ "${status}" -eq 0      ]]
+
+  # Creates new note file:
+
+  [[ -f "${NB_DIR}/home/example_title.md" ]]
+
+  diff                                        \
+    <(cat "${NB_DIR}/home/example_title.md")  \
+    <(cat <<HEREDOC
+# Example Title
+
+Piped content.
+HEREDOC
+)
+
+  # Creates git commit:
+
+  cd "${NB_DIR}/home" || return 1
+  while [[ -n "$(git status --porcelain)" ]]
+  do
+    sleep 1
+  done
+  git log --stat
+  git log | grep -q '\[nb\] Add: example_title.md'
+
+  # Adds to index:
+
+  [[ -e "${NB_DIR}/home/.index" ]]
+
+  diff                      \
+    <(ls "${NB_DIR}/home")  \
+    <(cat "${NB_DIR}/home/.index")
+
+  # Prints output:
+
+  [[ "${lines[0]}" =~ Added:\ .*[.*1.*].*\ .*example_title.md.*\ \"Example\ Title\" ]]
+}
+
+@test "'add' with piped content includes content from --content, and standard input separated by newlines." {
+  {
+    "${_NB}" init
+  }
+
+  run bash -c "echo 'Piped content.' | \"${_NB}\" add --content \"Example content.\""
+
+  printf "\${status}: '%s'\\n" "${status}"
+  printf "\${output}: '%s'\\n" "${output}"
+
+  # Returns status 0:
+
+  [[ "${status}" -eq 0      ]]
+
+  # Creates new note file:
+
+  _files=($(ls "${NB_DIR}/home/"))
+
+  [[ "${#_files[@]}" -eq 1  ]]
+
+  [[ -f "${NB_DIR}/home/${_files[0]:-}" ]]
+
+  diff                                      \
+    <(cat "${NB_DIR}/home/${_files[0]:-}")  \
+    <(cat <<HEREDOC
+Example content.
+
+Piped content.
+HEREDOC
+)
+
+  # Creates git commit:
+
+  cd "${NB_DIR}/home" || return 1
+  while [[ -n "$(git status --porcelain)" ]]
+  do
+    sleep 1
+  done
+  git log --stat
+  git log | grep -q "\[nb\] Add: ${_files[0]:-}"
+
+  # Adds to index:
+
+  [[ -e "${NB_DIR}/home/.index" ]]
+
+  diff                      \
+    <(ls "${NB_DIR}/home")  \
+    <(cat "${NB_DIR}/home/.index")
+
+  # Prints output:
+
+  [[ "${lines[0]}" =~ Added:\ .*[.*1.*].*\ .*${_files[0]:-} ]]
+}
+
+@test "'add' with piped content creates new note without errors." {
+  {
+    "${_NB}" init
+  }
+
+  run bash -c "echo '# Piped content.' | \"${_NB}\" add --filename example.md"
+
+  printf "\${status}: '%s'\\n" "${status}"
+  printf "\${output}: '%s'\\n" "${output}"
+
+  # Returns status 0:
+
+  [[ "${status}" -eq 0      ]]
+
+  # Creates new note file:
+
+  [[ -f "${NB_DIR}/home/example.md" ]]
+
+  diff                                  \
+    <(cat "${NB_DIR}/home/example.md")  \
+    <(cat <<HEREDOC
+# Piped content.
+HEREDOC
+)
+
+  # Creates git commit:
+
+  cd "${NB_DIR}/home" || return 1
+  while [[ -n "$(git status --porcelain)" ]]
+  do
+    sleep 1
+  done
+  git log | grep -q '\[nb\] Add: example.md'
+
+  # Adds to index:
+
+  [[ -e "${NB_DIR}/home/.index" ]]
+
+  diff                      \
+    <(ls "${NB_DIR}/home")  \
+    <(cat "${NB_DIR}/home/.index")
+
+  # Prints output:
+
+  [[ "${lines[0]}" =~ Added:\ .*[.*1.*].*\ .*example.md.*\ \"Piped\ content.\" ]]
+}
+
+@test "'add --type org' with piped content creates a new .org note file." {
+  {
+    "${_NB}" init
+  }
+
+  run bash -c "echo '# Piped' | \"${_NB}\" add --type org"
+
+  [[ "${status}" -eq 0      ]]
+
+  _files=($(ls "${NB_DIR}/home/"))
+
+  [[ "${#_files[@]}" -eq 1  ]]
+
+  grep -q '# Piped' "${NB_DIR}/home"/*
+
+  [[ "${_files[0]}" =~ org$ ]]
+}
+
+@test "'add --type ''' with piped content exits with 1." {
+  {
+    "${_NB}" init
+  }
+
+  run bash -c "echo '# Piped' | \"${_NB}\" add --type"
+
+  [[ ${status} -eq 1        ]]
+
+  _files=($(ls "${NB_DIR}/home/"))
+
+  [[ "${#_files[@]}" -eq 0  ]]
+}
+
 # notebook: scoped ############################################################
 
 @test "'add notebook:' creates new note without errors." {
@@ -53,7 +574,7 @@ load test_helper
 
   # Returns status 0:
 
-  [[ ${status} -eq 0        ]]
+  [[ "${status}" -eq 0      ]]
 
   # Creates new note file with $EDITOR:
 
@@ -91,7 +612,6 @@ load test_helper
   {
     "${_NB}" init
     "${_NB}" notebooks add example
-
   }
 
   run "${_NB}" example:add
@@ -135,6 +655,188 @@ load test_helper
   [[ "${output}" =~ example:[A-Za-z0-9]+.md ]]
 }
 
+@test "'add notebook: <filename>' (space) creates new note with <filename>." {
+  {
+    "${_NB}" init
+    "${_NB}" notebooks add example
+  }
+
+  run "${_NB}" add example: "Example Filename.md"
+
+  printf "\${status}: '%s'\\n" "${status}"
+  printf "\${output}: '%s'\\n" "${output}"
+
+  # Returns status 0:
+
+  [[ "${status}" -eq 0      ]]
+
+  # Creates new note file with $EDITOR:
+
+  cat "${NB_DIR}/example/Example Filename.md"
+
+  [[ -f "${NB_DIR}/example/Example Filename.md"                         ]]
+  [[    "$(cat "${NB_DIR}/example/Example Filename.md")" =~ mock_editor ]]
+
+  # Creates git commit:
+
+  cd "${NB_DIR}/example" || return 1
+  while [[ -n "$(git status --porcelain)"   ]]
+  do
+    sleep 1
+  done
+  git log | grep -q '\[nb\] Add: Example Filename.md'
+
+  # Adds to index:
+
+  [[ -e "${NB_DIR}/example/.index"          ]]
+
+  diff                        \
+    <(ls "${NB_DIR}/example") \
+    <(cat "${NB_DIR}/example/.index")
+
+  # Prints output:
+
+  [[ "${output}" =~ Added:                          ]]
+  [[ "${output}" =~ example:[A-Za-z0-9]+            ]]
+  [[ "${output}" =~ example:Example\\\ Filename.md  ]]
+}
+
+@test "'add notebook:<filename>' (no space) creates new note with <filename>." {
+  {
+    "${_NB}" init
+    "${_NB}" notebooks add example
+  }
+
+  run "${_NB}" add example:Example\ Filename.md
+
+  printf "\${status}: '%s'\\n" "${status}"
+  printf "\${output}: '%s'\\n" "${output}"
+
+  # Returns status 0:
+
+  [[ "${status}" -eq 0      ]]
+
+  # Creates new note file with $EDITOR:
+
+  [[ -f "${NB_DIR}/example/Example Filename.md"                         ]]
+  [[    "$(cat "${NB_DIR}/example/Example Filename.md")" =~ mock_editor ]]
+
+  # Creates git commit:
+
+  cd "${NB_DIR}/example" || return 1
+  while [[ -n "$(git status --porcelain)"   ]]
+  do
+    sleep 1
+  done
+  git log | grep -q '\[nb\] Add: Example Filename.md'
+
+  # Adds to index:
+
+  [[ -e "${NB_DIR}/example/.index"          ]]
+
+  diff                        \
+    <(ls "${NB_DIR}/example") \
+    <(cat "${NB_DIR}/example/.index")
+
+  # Prints output:
+
+  [[ "${output}" =~ Added:                          ]]
+  [[ "${output}" =~ example:[A-Za-z0-9]+            ]]
+  [[ "${output}" =~ example:Example\\\ Filename.md  ]]
+}
+
+@test "'add notebook:<string>' (no space) creates new note with <string> as filename." {
+  {
+    "${_NB}" init
+    "${_NB}" notebooks add example
+  }
+
+  run "${_NB}" add example:Example\ String
+
+  printf "\${status}: '%s'\\n" "${status}"
+  printf "\${output}: '%s'\\n" "${output}"
+
+  # Returns status 0:
+
+  [[ "${status}" -eq 0      ]]
+
+  # Creates new note file with $EDITOR:
+
+  [[ -f "${NB_DIR}/example/Example String"                          ]]
+  [[    "$(cat "${NB_DIR}/example/Example String")" =~ mock_editor  ]]
+
+  # Creates git commit:
+
+  cd "${NB_DIR}/example" || return 1
+  while [[ -n "$(git status --porcelain)"     ]]
+  do
+    sleep 1
+  done
+  git log | grep -q '\[nb\] Add'
+
+  # Adds to index:
+
+  [[ -e "${NB_DIR}/example/.index"            ]]
+
+  diff                        \
+    <(ls "${NB_DIR}/example") \
+    <(cat "${NB_DIR}/example/.index")
+
+  # Prints output:
+
+  [[ "${output}" =~ Added:                    ]]
+  [[ "${output}" =~ example:[A-Za-z0-9]+      ]]
+  [[ "${output}" =~ example:Example\\\ String ]]
+}
+
+
+@test "'add notebook: <string>' (space) creates new note with <string> as content." {
+  {
+    "${_NB}" init
+    "${_NB}" notebooks add example
+  }
+
+  run "${_NB}" add example: Example\ String
+
+  printf "\${status}: '%s'\\n" "${status}"
+  printf "\${output}: '%s'\\n" "${output}"
+
+  # Returns status 0:
+
+  [[ "${status}" -eq 0      ]]
+
+  # Creates new note file with $EDITOR:
+
+  _files=($(ls "${NB_DIR}/example"))
+
+  [[ "${#_files[@]}" -eq 1  ]]
+
+  [[ "$(cat "${NB_DIR}/example/${_files[0]}")" =~ Example\ String ]]
+
+  # Creates git commit:
+
+  cd "${NB_DIR}/example" || return 1
+  while [[ -n "$(git status --porcelain)"   ]]
+  do
+    sleep 1
+  done
+  git log | grep -q '\[nb\] Add'
+
+  # Adds to index:
+
+  [[ -e "${NB_DIR}/example/.index"          ]]
+
+  diff                        \
+    <(ls "${NB_DIR}/example") \
+    <(cat "${NB_DIR}/example/.index")
+
+  # Prints output:
+
+  [[ "${output}" =~ Added:                  ]]
+  [[ "${output}" =~ example:[A-Za-z0-9]+    ]]
+  [[ "${output}" =~ example:[A-Za-z0-9]+.md ]]
+}
+
 # <filename> argument #########################################################
 
 @test "'add' with filename argument creates new note without errors." {
@@ -149,7 +851,7 @@ load test_helper
 
   # Returns status 0:
 
-  [[ ${status} -eq 0 ]]
+  [[ "${status}" -eq 0 ]]
 
   # Creates new note file with content:
 
@@ -193,15 +895,16 @@ load test_helper
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
 
-  # Returns status 0
-  [[ ${status} -eq 0                          ]]
+  # Returns status 0:
+
+  [[ "${status}" -eq 0 ]]
 
   # Creates new note file with content:
 
   _files=($(ls "${NB_DIR}/home/"))
 
-  [[ "${#_files[@]}" == 1                     ]]
-  [[ "${_files[0]}" == "example-filename.org" ]]
+  [[ "${#_files[@]}"  == 1                      ]]
+  [[ "${_files[0]}"   == "example-filename.org" ]]
 
   grep -q 'Example content.' "${NB_DIR}/home"/*
 
@@ -242,7 +945,7 @@ load test_helper
 
   # Returns status 0:
 
-  [[ ${status} -eq 0        ]]
+  [[ "${status}" -eq 0      ]]
 
   # Creates new note file with content:
 
@@ -289,7 +992,7 @@ load test_helper
 
   # Returns status 0:
 
-  [[ ${status} -eq 0        ]]
+  [[ "${status}" -eq 0      ]]
 
   # Creates new note file with content:
 
@@ -335,7 +1038,7 @@ load test_helper
 
   # Returns status 0:
 
-  [[ ${status} -eq 0        ]]
+  [[ "${status}" -eq 0      ]]
 
   # Creates new note file with content:
 
@@ -384,7 +1087,7 @@ load test_helper
 
   # Returns status 0:
 
-  [[ ${status} -eq 0        ]]
+  [[ "${status}" -eq 0      ]]
 
   # Creates new note file with content:
 
@@ -430,7 +1133,7 @@ load test_helper
 
   # Returns status 0:
 
-  [[ ${status} -eq 0        ]]
+  [[ "${status}" -eq 0      ]]
 
   # Creates new note file with content:
 
@@ -478,7 +1181,7 @@ load test_helper
 
   # Returns status 0:
 
-  [[ ${status} -eq 0        ]]
+  [[ "${status}" -eq 0      ]]
 
   # Creates new note file with content:
 
@@ -526,7 +1229,7 @@ load test_helper
 
   # Returns status 0:
 
-  [[ ${status} -eq 0        ]]
+  [[ "${status}" -eq 0      ]]
 
   # Creates new note file with content:
 
@@ -574,7 +1277,7 @@ load test_helper
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
 
-  [[ ${status} -eq 0        ]]
+  [[ "${status}" -eq 0      ]]
 
   _files=($(ls "${NB_DIR}/home/"))
 
@@ -600,7 +1303,7 @@ load test_helper
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
 
-  [[ ${status} -eq 0        ]]
+  [[ "${status}" -eq 0      ]]
 
   _files=($(ls "${NB_DIR}/home/"))
 
@@ -629,7 +1332,7 @@ load test_helper
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
 
-  [[ ${status} -eq 1        ]]
+  [[ "${status}" -eq 1      ]]
 
   _files=($(ls "${NB_DIR}/home/"))
 
@@ -648,7 +1351,7 @@ load test_helper
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
 
-  [[ ${status} -eq 0        ]]
+  [[ "${status}" -eq 0      ]]
 
   _files=($(ls "${NB_DIR}/home/"))
 
@@ -679,7 +1382,7 @@ load test_helper
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
 
-  [[ ${status} -eq 0        ]]
+  [[ "${status}" -eq 0      ]]
 
   _files=($(ls "${NB_DIR}/home/"))
 
@@ -710,7 +1413,7 @@ load test_helper
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
 
-  [[ ${status} -eq 0        ]]
+  [[ "${status}" -eq 0     ]]
 
   _files=($(ls "${NB_DIR}/home/"))
 
@@ -743,7 +1446,7 @@ load test_helper
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
 
-  [[ ${status} -eq 1        ]]
+  [[ "${status}" -eq 1      ]]
 
   cd "${NB_DIR}/home" || return 1
 
@@ -767,7 +1470,7 @@ load test_helper
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
 
-  [[ ${status} -eq 0        ]]
+  [[ "${status}" -eq 0      ]]
 
   _files=($(ls "${NB_DIR}/home/"))
 
@@ -803,7 +1506,7 @@ load test_helper
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
 
-  [[ ${status} -eq 1        ]]
+  [[ "${status}" -eq 1      ]]
 
   cd "${NB_DIR}/home" || return 1
 
@@ -823,7 +1526,7 @@ load test_helper
 
   run "${_NB}" add  "* Content" --type org
 
-  [[ ${status} -eq 0        ]]
+  [[ "${status}" -eq 0      ]]
 
   _files=($(ls "${NB_DIR}/home/"))
 
@@ -841,7 +1544,7 @@ load test_helper
 
   run "${_NB}" add  "* Content" --type
 
-  [[ ${status} -eq 1        ]]
+  [[ "${status}" -eq 1      ]]
 
   _files=($(ls "${NB_DIR}/home/"))
 
@@ -862,9 +1565,9 @@ load test_helper
 
   _files=($(ls "${NB_DIR}/home/"))
 
-  [[ ${status} -eq 0                                                            ]]
-  [[ "${#_files[@]}" -eq 1                                                      ]]
-  [[ "${_files[0]}" =~ enc$                                                     ]]
+  [[ "${status}"      -eq 0                                                     ]]
+  [[ "${#_files[@]}"  -eq 1                                                     ]]
+  [[ "${_files[0]}"   =~  enc$                                                  ]]
   [[ "$(file "${NB_DIR}/home/${_files[0]}" | cut -d: -f2)" =~ encrypted|openssl ]]
 }
 
@@ -880,10 +1583,10 @@ load test_helper
 
   _files=($(ls "${NB_DIR}/home/"))
 
-  [[ ${status} -eq 1                              ]]
-  [[ "${#_files[@]}" -eq 0                        ]]
-  [[ "${output}" =~ Encryption\ tool\ not\ found: ]]
-  [[ "${output}" =~ not-valid                     ]]
+  [[ "${status}"      -eq 1                             ]]
+  [[ "${#_files[@]}"  -eq 0                             ]]
+  [[ "${output}"      =~  Encryption\ tool\ not\ found: ]]
+  [[ "${output}"      =~  not-valid                     ]]
 }
 
 # --password option ###########################################################
@@ -895,87 +1598,7 @@ load test_helper
 
   run "${_NB}" add  "* Content" --encrypt --password
 
-  [[ ${status} -eq 1        ]]
-
-  _files=($(ls "${NB_DIR}/home/"))
-
-  [[ "${#_files[@]}" -eq 0  ]]
-}
-
-# piped #######################################################################
-
-@test "'add' with piped content creates new note without errors." {
-  {
-    "${_NB}" init
-  }
-
-  run bash -c "echo '# Piped' | \"${_NB}\" add"
-
-  printf "\${status}: '%s'\\n" "${status}"
-  printf "\${output}: '%s'\\n" "${output}"
-
-  # Returns status 0:
-
-  [[ ${status} -eq 0        ]]
-
-  # Creates new note file:
-
-  _files=($(ls "${NB_DIR}/home/"))
-
-  [[ "${#_files[@]}" -eq 1  ]]
-
-  grep -q '# Piped' "${NB_DIR}/home"/*
-
-  # Creates git commit:
-
-  cd "${NB_DIR}/home" || return 1
-  while [[ -n "$(git status --porcelain)" ]]
-  do
-    sleep 1
-  done
-  git log | grep -q '\[nb\] Add'
-
-  # Adds to index:
-
-  [[ -e "${NB_DIR}/home/.index" ]]
-
-  diff                      \
-    <(ls "${NB_DIR}/home")  \
-    <(cat "${NB_DIR}/home/.index")
-
-  # Prints output:
-
-  [[ "${output}" =~ Added:          ]]
-  [[ "${output}" =~ [A-Za-z0-9]+    ]]
-  [[ "${output}" =~ [A-Za-z0-9]+.md ]]
-}
-
-@test "'add --type org' with piped content creates a new .org note file." {
-  {
-    "${_NB}" init
-  }
-
-  run bash -c "echo '# Piped' | \"${_NB}\" add --type org"
-
-  [[ ${status} -eq 0        ]]
-
-  _files=($(ls "${NB_DIR}/home/"))
-
-  [[ "${#_files[@]}" -eq 1  ]]
-
-  grep -q '# Piped' "${NB_DIR}/home"/*
-
-  [[ "${_files[0]}" =~ org$ ]]
-}
-
-@test "'add --type ''' with piped content exits with 1." {
-  {
-    "${_NB}" init
-  }
-
-  run bash -c "echo '# Piped' | \"${_NB}\" add --type"
-
-  [[ ${status} -eq 1        ]]
+  [[ "${status}"    -eq 1   ]]
 
   _files=($(ls "${NB_DIR}/home/"))
 
@@ -996,7 +1619,7 @@ load test_helper
 
   # Returns status 0:
 
-  [[ ${status} -eq 0        ]]
+  [[ "${status}" -eq 0      ]]
 
   # Creates a new note file with $EDITOR:
 
@@ -1030,7 +1653,7 @@ load test_helper
 
   # Returns status 0:
 
-  [[ ${status} -eq 0        ]]
+  [[ "${status}" -eq 0      ]]
 
   # Creates a new note file with $EDITOR:
 
@@ -1064,7 +1687,7 @@ load test_helper
 
   # Returns status 0:
 
-  [[ ${status} -eq 0        ]]
+  [[ "${status}" -eq 0      ]]
 
   # Creates a new note file with $EDITOR:
 
@@ -1090,7 +1713,7 @@ load test_helper
 @test "'help add' exits with status 0." {
   run "${_NB}" help add
 
-  [[ ${status} -eq 0 ]]
+  [[ "${status}" -eq 0 ]]
 }
 
 @test "'help add' returns usage information." {
