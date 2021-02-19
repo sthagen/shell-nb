@@ -72,9 +72,12 @@ fi
 
 # install dependencies
 sudo apt-get update
-sudo apt-get install bats -y
+sudo apt-get install bats   -y
+sudo apt-get install elinks -y
+sudo apt-get install lynx   -y
+sudo apt-get install ncat   -y
 sudo apt-get install python-pygments -y
-sudo apt-get install w3m
+sudo apt-get install w3m    -y
 
 # install latest pandoc
 curl -LO https://github.com/jgm/pandoc/releases/download/2.11.2/pandoc-2.11.2-1-amd64.deb
@@ -94,10 +97,10 @@ git config --global user.email  "example@example.test"
 HEREDOC
 
   # Ubuntu 20.10
-  # config.vm.define "ubuntu2010" do |ubuntu2010|
-  #   ubuntu2010.vm.box = "ubuntu/groovy64"
-  #   ubuntu2010.vm.provision :shell, inline: $ubuntu_setup, privileged: false
-  # end
+  config.vm.define "ubuntu2010" do |ubuntu2010|
+    ubuntu2010.vm.box = "ubuntu/groovy64"
+    ubuntu2010.vm.provision :shell, inline: $ubuntu_setup, privileged: false
+  end
 
   # Ubuntu 20.04 LTS
   # config.vm.define "ubuntu2004" do |ubuntu2004|

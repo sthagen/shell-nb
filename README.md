@@ -19,9 +19,10 @@ and knowledge base application with:
 
 - plain-text data storage,
 - [encryption](#password-protected-encrypted-notes-and-bookmarks),
-- [filtering](#listing-notes) and [search](#-search),
+- [filtering](#listing-notes), [pinning](#-pinning), [tagging](#-tagging), and [search](#-search),
 - [Git](https://git-scm.com/)-backed [versioning](#-revision-history) and [syncing](#-git-sync),
 - [Pandoc](https://pandoc.org/)-backed [conversion](#%EF%B8%8F-import--export),
+- <a href="#-linking">[[wiki-style linking]]</a> with terminal-first [browsing](#-browsing),
 - global and local [notebooks](#-notebooks),
 - customizable [color themes](#-color-themes),
 - extensibility through [plugins](#-plugins),
@@ -30,7 +31,7 @@ and more, all in a single portable, user-friendly script.
 
 `nb` creates notes in text-based formats like
 [Markdown](https://en.wikipedia.org/wiki/Markdown),
-[Emacs Org mode](https://orgmode.org/),
+[Org](https://orgmode.org/),
 and [LaTeX](https://www.latex-project.org/),
 can work with files in any format, can import and export notes to many
 document formats, and can create private, password-protected encrypted
@@ -165,6 +166,7 @@ Also supported for various enhancements:
 [`highlight`](http://www.andre-simon.de/doku/highlight/en/highlight.php),
 [`imgcat`](https://www.iterm2.com/documentation-images.html),
 [kitty's `icat` kitten](https://sw.kovidgoyal.net/kitty/kittens/icat.html),
+[Links](https://en.wikipedia.org/wiki/Links_(web_browser)),
 [Lynx](https://en.wikipedia.org/wiki/Lynx_(web_browser)),
 [Midnight Commander](https://en.wikipedia.org/wiki/Midnight_Commander),
 [`mpg123`](https://en.wikipedia.org/wiki/Mpg123),
@@ -301,6 +303,10 @@ the latest version using the [`nb update`](#update) subcommand.
   <a href="#viewing-notes">Viewing</a> •
   <a href="#deleting-notes">Deleting</a> •
   <a href="#-bookmarks">Bookmarks</a> •
+  <a href="#-tagging">Tagging</a> •
+  <a href="#-linking">Linking</a> •
+  <a href="#-browsing">Browsing</a> •
+  <a href="#-zettelkasten">Zettelkasten</a> •
   <a href="#-folders">Folders</a> •
   <a href="#-pinning">Pinning</a> •
   <a href="#-search">Search</a> •
@@ -318,9 +324,14 @@ the latest version using the [`nb update`](#update) subcommand.
   <a href="#tests">Tests</a>
 </p>
 
-*Some new features described below, including many related to folders,
-are currently available in the git repository and will be included in
-version 6.0.0. [Version 5.7.8 Documentation](https://github.com/xwmx/nb/tree/5.7.8#nb)*
+<p align="center">
+  <em>Some new features described below are currently available in the git
+repository and will be included in version 6.0.0.</em>
+</p>
+
+<p align="center">
+  <em><a href="https://github.com/xwmx/nb/tree/5.7.8#nb">Version 5.7.8 Documentation</a></em>
+</p>
 
 To get started, simply run:
 
@@ -465,7 +476,7 @@ extension in the filename, the extension by itself, or via
 the `--type <type>` option:
 
 ```bash
-# open a new org mode file in the editor
+# open a new Org file in the editor
 nb add example.org
 
 # open a new reStructuredText file in the editor
@@ -598,7 +609,7 @@ modified. By default, each note is listed with its id, filename, and an
 excerpt from the first line of the note. When a note has a title, the
 title is displayed instead of the filename and first line.
 
-Titles can be defined within a note using
+Markdown titles can be defined within a note using
 [either Markdown `h1` style](https://daringfireball.net/projects/markdown/syntax#header)
 or [YAML front matter](https://jekyllrb.com/docs/front-matter/):
 
@@ -617,7 +628,18 @@ title: Ideas
 ---
 ```
 
-Once defined, titles will be displayed in place of the filename and first line
+[Org](https://orgmode.org/) and [LaTeX](https://www.latex-project.org/)
+titles are recognized in `.org` and `.latex` files:
+
+```org
+#+TITLE: Example Org Title
+```
+
+```latex
+\title{Example LaTeX Title}
+```
+
+Once defined, titles are displayed in place of the filename and first line
 in the output of `nb ls`:
 
 ```bash
@@ -1025,12 +1047,28 @@ go to* "Settings" -> "Advanced" -> "Scroll wheel sends arrow keys when in
 alternate screen mode" *and change it to* "Yes".
 *[More info](https://stackoverflow.com/a/37610820)*
 
+Use the `-p` / `--print` option to print to standard output with syntax
+highlighting:
+
+```bash
+> nb show 123 --print
+# Example Title
+
+Example content:
+
+- one
+- two
+- three
+```
+
+Use `nb show --print --no-color` to print without syntax highlighting.
+
 When [Pandoc](https://pandoc.org/) is available, use the `-r` / `--render`
 option to render the note to HTML and open it in your terminal browser:
 
 ```bash
 nb show example.md --render
-# opens example.md as an HTML page in w3m or lynx
+# opens example.md as an HTML page in w3m, links, or lynx
 ```
 
 `nb show` also supports previewing other file types in the terminal,
@@ -1059,7 +1097,8 @@ tools include:
   - [Pandoc](https://pandoc.org/)
 - EPUB ebooks:
   - [Pandoc](https://pandoc.org/) with
-    [`w3m`](https://en.wikipedia.org/wiki/W3m) or
+    [`w3m`](https://en.wikipedia.org/wiki/W3m),
+    [`links`](https://en.wikipedia.org/wiki/Links_(web_browser)), or
     [`lynx`](https://en.wikipedia.org/wiki/Lynx_(web_browser))
 
 When using `nb show` with other file types or if the above tools are not
@@ -1458,7 +1497,8 @@ nb example:open 12
 
 [`nb peek`](#peek) (alias: `preview`) opens the bookmarked page
 in your terminal web browser, such as
-[w3m](https://en.wikipedia.org/wiki/W3m) or
+[w3m](https://en.wikipedia.org/wiki/W3m),
+[Links](https://en.wikipedia.org/wiki/Links_(web_browser)), or
 [Lynx](https://en.wikipedia.org/wiki/Lynx_(web_browser)):
 
 ```bash
@@ -1488,15 +1528,18 @@ environment variable, assigned in `~/.bashrc`, `~/.zshrc`, or similar:
 export BROWSER=lynx
 ```
 
-When `$BROWSER` is not set, `nb` looks for `w3m` and `lynx` and uses the
-first one it finds.
+When `$BROWSER` is not set, `nb` looks for
+[`w3m`](https://en.wikipedia.org/wiki/W3m),
+[`links`](https://en.wikipedia.org/wiki/Links_(web_browser)), and
+[`lynx`](https://en.wikipedia.org/wiki/Lynx_(web_browser))
+and uses the first one it finds.
 
 `$BROWSER` can also be used to easy specify the terminal browser for an
 individual command:
 
 ```bash
-> BROWSER=lynx nb 12 peek
-# opens the URL from bookmark 12 in lynx
+> BROWSER=links nb 12 peek
+# opens the URL from bookmark 12 in links
 
 > BROWSER=w3m nb 12 peek
 # opens the URL from bookmark 12 in w3m
@@ -1599,6 +1642,320 @@ Perform a full text search of bookmarks and archived page content:
 
 See [`bookmark help`](#bookmark-help) for more information.
 
+### 🏷 Tagging
+
+`nb` recognizes hashtags defined anywhere within a text document.
+Notes and bookmarks can be tagged when they are created
+using the `--tags <tag1>,<tag2>...` option, which is available with
+[`nb add`](#add), [`nb <url>`](#nb-help), and
+[`nb bookmark`](#bookmark). `--tags` takes a comma-separated list of
+tags, converts them to hashtags, and adds them to the document:
+
+```bash
+> nb add --title "Example Title" "Example note content." --tags tag1,tag2
+```
+
+```markdown
+# Example Title
+
+#tag1 #tag2
+
+Example note content.
+```
+
+```bash
+> nb https://example.com --tags tag1,tag2
+```
+
+```markdown
+# Example Title (example.com)
+
+<https://example.com>
+
+## Description
+
+Example description.
+
+## Tags
+
+#tag1 #tag2
+
+## Content
+
+Example Title
+=============
+
+This domain is for use in illustrative examples in documents. You may
+use this domain in literature without prior coordination or asking for
+permission.
+
+[More information\...](https://www.iana.org/domains/example)
+```
+
+Tagged items can be searched with [`nb search` / `nb q`](#search):
+
+```bash
+# search for and list items in any notebook tagged with "#tag1"
+nb search "#tag1" --all --list
+
+# search for and list items in any notebook tagged with "#tag1", shortcut and short options
+nb q "#tag1" -al
+
+# search for items in the current notebook tagged with both "#tag1" AND "#tag2"
+nb q "#tag1" "#tag2"
+
+# search for items in the current notebook tagged with both "#tag1" AND "#tag2", long option
+nb q "#tag1" --and "#tag2"
+
+# search for items in the current notebook tagged with either "#tag1" OR "#tag2"
+nb q "#tag1|#tag2"
+
+# search for items in the current notebook tagged with either "#tag1" OR "#tag2", long option
+nb q "#tag1" --or "#tag2"
+```
+
+Linked tags can be browsed with [`nb browse`](#browse), providing
+another dimension of browsability in terminal and GUI web browers,
+complimenting <a href="#-linking">[[wiki-style linking]]</a>.
+
+Tags in notes, bookmarks, files in text-based formats, Word `.docx` documents,
+and [Open Document](https://en.wikipedia.org/wiki/OpenDocument) `.odt`
+files are rendered as links to the list of items in the notebook sharing
+that tag:
+
+```bash
+❯nb · example : 321
+
+Example Title
+
+#tag1 #tag2
+
+Example content with link to [[Sample Title]].
+
+More example content:
+- one
+- two
+- three
+```
+
+Use the `-q` / `--query` option to open `nb browse` to the list of all
+items in the current notebook or a specified notebook or folder
+that share a tag:
+
+```bash
+# open to a list of items tagged with "#tag2" in the "example" notebook
+> nb browse example: --query "#tag2"
+❯nb · example
+
+search: [#tag2               ]
+
+[example:321] Example Title
+[example:654] Sample Title
+[example:789] Demo Title
+
+# shortcut alias and short option
+> nb br example: -q "#tag2"
+❯nb · example
+
+search: [#tag2               ]
+
+[example:321] Example Title
+[example:654] Sample Title
+[example:789] Demo Title
+```
+
+For more information about full-text search, see
+[Search](#-search) and [`nb search`](#search). For more information
+about browsing, see [Browsing](#-browsing) and [`nb browse`](#browse).
+
+### 🔗 Linking
+
+*Version 6.0.0-alpha*
+
+Notes, bookmarks, files in text-based formats, Word `.docx` documents,
+and [Open Document](https://en.wikipedia.org/wiki/OpenDocument) `.odt`
+files can reference other items using
+<a href="#-linking">[[wiki-style links]]</a>, making `nb` a powerful
+terminal-first platform for
+[Zettelkasten](#-zettelkasten)
+and other link-based note-taking methods.
+
+To add a link from a note or bookmark to another in the same notebook,
+include the id, title, or relative path for the target item
+within double square brackets anywhere in the linking document:
+
+```text
+# link to item with id 123 in the root level of current notebook
+[[123]]
+
+# link to item titled "Example Title" in the root level of the current notebook
+[[Example Title]]
+
+# link to item with id 456 in the folder named "Sample Folder"
+[[Sample Folder/456]]
+
+# link to item titled "Demo Title" in the folder named "Sample Folder"
+[[Sample Folder/Demo Title]]
+```
+
+To link to an item in another notebook, add the notebook name with a
+colon before the identifier:
+
+```text
+# link to item 123 in the "sample" folder in the "example" notebook
+[[example:sample/123]]
+
+# link to the item titled "Example Title" in the "demo" notebook
+[[demo:Example Title]]
+
+# link to the item with filename "Example File.md" in the "sample" notebook
+[[sample:Example File.md]]
+```
+
+<a href="#-linking">[[wiki-style links]]</a> cooperate well with
+[Org links](https://orgmode.org/guide/Hyperlinks.html), which have
+a similar syntax, providing a convenient option for linking collections
+of Org files.
+
+For more information about identifying items, see [Selectors](#selectors).
+
+### 🌍 Browsing
+
+*Version 6.0.0-alpha*
+
+Use [`nb browse`](#browse) to browse, view, and search linked notes,
+bookmarks, notebooks, folders, and other items using a terminal or
+GUI web brower.
+
+`nb browse` includes an embedded, terminal-first web application that
+renders <a href="#-linking">[[wiki-style links]]</a> and
+[#tags](#-tagging)
+as internal links, enabling you to browse your notes and notebooks in web
+browsers, including seamlessly browsing to and from the offsite links in
+bookmarks and notes.
+
+```bash
+> nb browse
+❯nb · home
+
+search: [                    ]
+
+[home:6]  📌 Example Markdown Title
+[home:12] 🔒 example-encrypted.md.enc
+[home:11] 🔖 Example Bookmark (example.com)
+[home:10] 🔖 🔒 example-encrypted.bookmark.md.enc
+[home:9]  Example .org Title
+[home:8]  🌄 example-image.png
+[home:7]  📄 example.pdf
+[home:5]  🔉 example-audio.mp3
+[home:4]  Example LaTeX Title
+[home:3]  📹 example-video.mp4
+[home:2]  example.md
+[home:1]  📂 Example Folder
+```
+
+Items are displayed using the same format as `nb` and `nb ls`, including
+pinned items, with each list item linked. `nb browse` is designed to make
+it easy to navigate using only the keyboard within the terminal.
+
+`nb browse` opens in [w3m](https://en.wikipedia.org/wiki/W3m) (recommended),
+[Links](https://en.wikipedia.org/wiki/Links_\(web_browser\)),
+[Lynx](https://en.wikipedia.org/wiki/Lynx_\(web_browser\)), or in the
+browser set in the `$BROWSER` environment variable.
+
+To open a specific item in `nb browse`, pass the [selector](#selectors)
+for the item, folder, or notebook:
+
+```bash
+# open the item titled "Example Title" in the folder named "Sample" in the "example" notebook
+> nb browse example:Sample/Example\ Title
+❯nb · example : Sample / 987
+
+Example Title
+
+#tag1 #tag2
+
+Example content with link to [[Demo Title]].
+
+More example content:
+- one
+- two
+- three
+```
+
+The `nb browse` interface includes breadcrumbs that can be used to
+quickly navigate to back to parent folders, the current notebook, or
+jump to other notebooks.
+
+`nb browse` is particularly useful for [bookmarks](#-bookmarks). Cached
+content is rendered in the web browser, and internal and external links
+are easily accessible directly in the terminal, providing a
+convenient, distraction-free approach for browsing collections
+of bookmarks.
+
+To open `nb browse` in the system's primary web browser, use `nb browse
+--gui` / `nb browse -g`:
+
+```bash
+# open the item with id 123 in the "sample" notebook in the system's primary GUI browser
+nb browse sample:123 --gui
+```
+
+`nb browse` includes a search field that can be used for easy searches
+in the current notebook or folder when browsing. For full-featured
+search, see [Search](#-search) and [`nb search`](#search).
+
+`nb browse` depends on [`ncat`](https://nmap.org/ncat/) and
+[`pandoc`](https://pandoc.org/). When only `pandoc` is available, the
+current note will be rendered and links go to unrendered, original files.
+If neither `pandoc` nor `ncat` is available, `nb` falls back to
+[`nb show`](#show).
+
+##### Shortcut Alias: `br`
+
+`nb browse` can also be used with the alias `br`:
+
+```bash
+# open the current notebook in the terminal web browser
+nb br
+
+# open the item with id 123 in the "example" notebook using the terminal web browser
+nb br example:123
+
+# open the notebook named "sample" in the GUI web browser
+nb br sample: -g
+```
+
+For more information, see [`nb browse`](#browse).
+
+### 🗂 Zettelkasten
+
+Zettelkasten (German: "slip box") is a method of note-taking and personal
+knowledge management modeled around a few key features:
+
+- Notes are taken liberally on index cards.
+- Each note is numbered for easy reference.
+- Index cards are organized into boxes.
+- Index cards can reference other index cards.
+- Cards can include tags and other metadata.
+
+Since `nb` works directly on plain-text files organized in normal system
+directories in normal git repositories, `nb` is a very close digital analogue
+to physical zettelkasten note-taking.
+
+|    Zettelkasten   |                       `nb`                    |
+|:-----------------:|:---------------------------------------------:|
+| index cards       | [notes](#-notes) and [bookmarks](#-bookmarks) |
+| numbering         | ids and [selectors](#selectors)               |
+| slip boxes        | [notebooks](#-notebooks)                      |
+| tags              | [#tags](#-tagging)                            |
+| metadata          | YAML front matter                             |
+| cross-references  |  <a href="#-linking">[[wiki-style links]]</a> |
+| fast note-taking  | [`nb add` / `nb a`](#adding-notes)            |
+
+For more information about Zettelkasten, see
+[Wikipedia](https://en.wikipedia.org/wiki/Zettelkasten).
+
 ### 📂 Folders
 
 *Version 6.0.0-alpha*
@@ -1692,7 +2049,8 @@ nb edit example:sample/demo/3
 
 *Version 6.0.0-alpha*
 
-Items can be pinned so they appear first in `nb` and `nb ls`:
+Items can be pinned so they appear first in `nb`, `nb ls`, and `nb
+browse`:
 
 ```bash
 > nb
@@ -3293,10 +3651,13 @@ Usage:
   nb bookmark (open | peek | url) (<id> | <filename> | <path> | <title>)
   nb bookmark (edit | delete) (<id> | <filename> | <path> | <title>)
   nb bookmark search <query>
-  nb browse [<notebook>:][<id> | <filename> | <title> | <path>] [--print]
+  nb browse [<notebook>:][<id> | <filename> | <title> | <path>]
+            [-g | --gui] [--notebooks] [--print] [-q | --query <query>]
+            [-s | --serve]
   nb completions (check | install [-d | --download] | uninstall)
   nb count [<notebook>:][<relative-path>]
-  nb delete (<id> | <filename> | <path> | <title>) [-f | --force]
+  nb delete [<notebook>:](<id> | <filename> | <path> | <title>)...
+            [-f | --force]
   nb edit (<id> | <filename> | <path> | <title>)
           [-c <content> | --content <content>] [--edit]
           [-e <editor> | --editor <editor>] [--overwrite] [--prepend]
@@ -3684,9 +4045,9 @@ Description:
   When readability-cli [2] is install, markup is cleaned up to focus on
   content.
 
-  `peek` opens the page in `w3m` [3] or `lynx` [4] when available.
-  To specify a preferred browser, set the `$BROWSER` environment variable
-  in your .bashrc, .zshrc, or equivalent, e.g., `export BROWSER="lynx"`.
+  `peek` opens the page in `w3m` [3], `links` [4], or `lynx` [5] when
+  available. To specify a preferred browser, set the `$BROWSER` environment
+  variable in your .bashrc, .zshrc, or equivalent, e.g.: export BROWSER="links"
 
   Bookmarks are identified by the `.bookmark.md` file extension. The
   bookmark URL is the first URL in the file within "<" and ">" characters:
@@ -3696,7 +4057,8 @@ Description:
     1. https://pandoc.org/
     2. https://gitlab.com/gardenappl/readability-cli
     3. https://en.wikipedia.org/wiki/W3m
-    4. https://en.wikipedia.org/wiki/Lynx_(web_browser)
+    4. https://en.wikipedia.org/wiki/Links_(web_browser)
+    5. https://en.wikipedia.org/wiki/Lynx_(web_browser)
 
 Examples:
   nb https://example.com
@@ -3719,20 +4081,24 @@ Shortcut Alias: `b`
 ```text
 Usage:
   nb browse [<notebook>:][<id> | <filename> | <title> | <path>]
-            [--notebooks] [--print]
+            [-g | --gui] [--notebooks] [--print] [-q | --query <query>]
+            [-s | --serve]
 
 Options:
-  --notebooks   Browse notebooks.
-  --print       Print to standard output.
+  -g, --gui             Open in the system's primary GUI web browser.
+  --notebooks           Browse notebooks.
+  --print               Print to standard output.
+  -q, --query <query>   Open to the search results for <query>.
+  -s, --serve           Start the web application server.
 
 Description:
-  Browse and view linked notes, notebooks, folders, and other items using
-  the terminal web brower.
+  Browse and view linked notes, bookmarks, notebooks, folders, and other
+  items using the terminal or GUI web brower.
 
-  `browse` includes an embedded, terminal-first web application and server
-  that renders [[wiki-style links]] as internal links, enabling you to
-  browse your notes and notebooks in your terminal web browser, as well as
-  seamlessly browse to and from the offsite links in bookmarks and notes.
+  `browse` includes an embedded, terminal-first web application that
+  renders [[wiki-style links]] and #tags as internal links, enabling you
+  to browse your notes and notebooks in your terminal web browser, as well
+  as seamlessly browse to and from the offsite links in bookmarks and notes.
 
   To link to a note or bookmark from another, include the selector for the
   target item within double square brackets anywhere in the linking document:
@@ -3743,10 +4109,14 @@ Description:
     # link to the item titled "Example Title" in the "demo" notebook
     [[demo:Example Title]]
 
-  `browse` depends on `ncat` and `pandoc`:
+  `browse` supports `w3m` [1] (recommended), `links` [2], and `lynx` [3]
+  and depends on `ncat` [4] and `pandoc` [5]:
 
-    1. https://nmap.org/ncat/
-    2. https://pandoc.org/
+    1. https://en.wikipedia.org/wiki/W3m
+    2. https://en.wikipedia.org/wiki/Links_(web_browser)
+    3. https://en.wikipedia.org/wiki/Lynx_(web_browser)
+    4. https://nmap.org/ncat/
+    5. https://pandoc.org/
 
 Examples:
   nb browse
@@ -3755,7 +4125,7 @@ Examples:
   nb browse 123
   nb browse demo:456
 
-Shortcut Alias: `br
+Shortcut Alias: `br`
 ```
 
 #### `completions`
@@ -3787,13 +4157,14 @@ Description:
 
 ```text
 Usage:
-  nb delete (<id> | <filename> | <path> | <title>) [-f | --force]
+  nb delete [<notebook>:](<id> | <filename> | <path> | <title>)...
+            [-f | --force]
 
 Options:
   -f, --force   Skip the confirmation prompt.
 
 Description:
-  Delete a note.
+  Delete one or more items.
 
 Examples:
   nb delete 3
@@ -3902,7 +4273,7 @@ Description:
     1. https://pandoc.org/
 
 Examples:
-  # Export an Emacs Org mode note
+  # Export an Org note
   nb export example.org /path/to/example.org
 
   # Export a Markdown note to HTML and print to standard output
@@ -4636,8 +5007,8 @@ Alias: `set`
 ```text
 [5]  default_extension
      -----------------
-     The default extension to use for note files. Change to "org" for Emacs
-     Org mode files, "rst" for reStructuredText, "txt" for plain text, or
+     The default extension to use for note files. Change to "org" for
+     Org files, "rst" for reStructuredText, "txt" for plain text, or
      whatever you prefer.
 
      • Default Value: md
@@ -4853,19 +5224,21 @@ Description:
   To skip the pager and print to standard output, use the `-p` / `--print`
   option.
 
-  `-r` / `--render` automatically uses either `w3m` [2] or `lynx` [3].
-  To specify a preferred browser, set the `$BROWSER` environment variable
-  in your .bashrc, .zshrc, or equivalent, e.g., `export BROWSER="lynx"`.
+  `-r` / `--render` automatically uses either `w3m` [2], `links` [3],
+  or `lynx` [4]. To specify a preferred browser, set the `$BROWSER`
+  environment variable in your .bashrc, .zshrc, or equivalent, e.g.,
+  `export BROWSER="links"`.
 
-  If `bat` [4], `highlight` [5], or Pygments [6] is installed, notes are
+  If `bat` [5], `highlight` [6], or Pygments [7] is installed, notes are
   printed with syntax highlighting.
 
     1. https://pandoc.org/
     2. https://en.wikipedia.org/wiki/W3m
-    3. https://en.wikipedia.org/wiki/Lynx_(web_browser)
-    4. https://github.com/sharkdp/bat
-    5. http://www.andre-simon.de/doku/highlight/en/highlight.php
-    6. https://pygments.org/
+    3. https://en.wikipedia.org/wiki/Links_(web_browser)
+    4. https://en.wikipedia.org/wiki/Lynx_(web_browser)
+    5. https://github.com/sharkdp/bat
+    6. http://www.andre-simon.de/doku/highlight/en/highlight.php
+    7. https://pygments.org/
 
 Examples:
   nb show 1
@@ -5387,7 +5760,7 @@ at the root level of the notebook directory.
 
 ## Tests
 
-With more than 1,300 tests spanning over 30,000 lines, `nb` is really
+With more than 1,400 tests spanning over 30,000 lines, `nb` is really
 mostly a [test suite](https://github.com/xwmx/nb/tree/master/test).
 [Tests run continuously via GitHub Actions](https://github.com/xwmx/nb/actions)
 on recent versions of both Ubuntu and macOS to account for differences between
