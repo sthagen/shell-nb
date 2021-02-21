@@ -450,8 +450,8 @@ Added: [10] example_title.md "Example Title"
 ```
 
 Tags can be added with the `--tags <tag1>,<tag2>...` option, which takes
-a comma separated list of tags, converts them to hashtags, and inserts
-them between the title and content:
+a comma separated list of tags, converts them to
+[`#hashtags`](#-tagging), and inserts them between the title and content:
 
 ```bash
 > nb add "Example content." --title "Tagged Example" --tags tag1,tag2
@@ -1339,7 +1339,7 @@ permission.
 ```
 
 Bookmarks can be tagged using the `-t` / `--tags` option. Tags are converted
-into hashtags:
+into [`#hashtags`](#-tagging):
 
 ```bash
 nb https://example.com --tags tag1,tag2
@@ -1644,12 +1644,16 @@ See [`bookmark help`](#bookmark-help) for more information.
 
 ### 🏷 Tagging
 
-`nb` recognizes hashtags defined anywhere within a text document.
-Notes and bookmarks can be tagged when they are created
+`nb` recognizes [`#hashtags`](#-tagging) defined anywhere within a
+text document. Notes and bookmarks can be tagged when they are created
 using the `--tags <tag1>,<tag2>...` option, which is available with
 [`nb add`](#add), [`nb <url>`](#nb-help), and
 [`nb bookmark`](#bookmark). `--tags` takes a comma-separated list of
-tags, converts them to hashtags, and adds them to the document:
+tags, converts them to [`#hashtags`](#-tagging), and adds them to the
+document.
+
+Tags added to notes with `nb add --tags` are placed between the title
+and body text:
 
 ```bash
 > nb add --title "Example Title" "Example note content." --tags tag1,tag2
@@ -1662,6 +1666,9 @@ tags, converts them to hashtags, and adds them to the document:
 
 Example note content.
 ```
+
+Tags added to bookmarks with `nb <url> --tags` and `nb bookmark <url> --tags`
+are placed in a _Tags_ section:
 
 ```bash
 > nb https://example.com --tags tag1,tag2
@@ -1714,9 +1721,9 @@ nb q "#tag1|#tag2"
 nb q "#tag1" --or "#tag2"
 ```
 
-Linked tags can be browsed with [`nb browse`](#browse), providing
-another dimension of browsability in terminal and GUI web browers,
-complimenting <a href="#-linking">[[wiki-style linking]]</a>.
+Linked tags can be [browsed](#-browsing) with [`nb browse`](#browse),
+providing another dimension of browsability in terminal and GUI web
+browers, complimenting <a href="#-linking">[[wiki-style linking]]</a>.
 
 Tags in notes, bookmarks, files in text-based formats, Word `.docx` documents,
 and [Open Document](https://en.wikipedia.org/wiki/OpenDocument) `.odt`
@@ -1855,8 +1862,27 @@ search: [                    ]
 ```
 
 Items are displayed using the same format as `nb` and `nb ls`, including
-pinned items, with each list item linked. `nb browse` is designed to make
-it easy to navigate using only the keyboard within the terminal.
+pinned items, with each list item linked. Lists are automatically paginated
+to fit the height of the terminal window.
+
+```bash
+> nb browse example:sample/demo/
+❯nb · example : sample / demo /
+
+search: [                    ]
+
+[example:sample/demo/7] Title Seven
+[example:sample/demo/6] Title Six
+[example:sample/demo/5] Title Five
+[example:sample/demo/4] Title Four
+[example:sample/demo/3] Title Three
+
+next ❯
+```
+
+`nb browse` is designed to make it easy to navigate within terminal
+browsers using only keyboard commands, with mouse interactions also
+supported.
 
 `nb browse` opens in [w3m](https://en.wikipedia.org/wiki/W3m) (recommended),
 [Links](https://en.wikipedia.org/wiki/Links_\(web_browser\)),
@@ -1868,8 +1894,8 @@ for the item, folder, or notebook:
 
 ```bash
 # open the item titled "Example Title" in the folder named "Sample" in the "example" notebook
-> nb browse example:Sample/Example\ Title
-❯nb · example : Sample / 987
+> nb browse example:sample/Example\ Title
+❯nb · example : sample / 987
 
 Example Title
 
@@ -1878,14 +1904,16 @@ Example Title
 Example content with link to [[Demo Title]].
 
 More example content:
-- one
-- two
-- three
+
+  • one
+  • two
+  • three
 ```
 
 The `nb browse` interface includes breadcrumbs that can be used to
 quickly navigate to back to parent folders, the current notebook, or
 jump to other notebooks.
+
 
 `nb browse` is particularly useful for [bookmarks](#-bookmarks). Cached
 content is rendered in the web browser, and internal and external links
@@ -1893,8 +1921,45 @@ are easily accessible directly in the terminal, providing a
 convenient, distraction-free approach for browsing collections
 of bookmarks.
 
-To open `nb browse` in the system's primary web browser, use `nb browse
---gui` / `nb browse -g`:
+```bash
+> nb browse text:formats/markdown/123
+❯nb · text : formats / markdown / 123
+Daring Fireball: Markdown (daringfireball.net)
+
+https://daringfireball.net/projects/markdown/
+
+Related
+
+  • https://en.wikipedia.org/wiki/Markdown
+
+Comments
+
+See also:
+
+  • [[text:formats/org]]
+  • [[cli:apps/nb]]
+
+Tags
+
+#markup #plain-text
+
+Content
+
+Daring Fireball: Markdown
+
+Download
+
+Markdown 1.0.1 (18 KB) — 17 Dec 2004
+
+Introduction
+
+Markdown is a text-to-HTML conversion tool for web writers. Markdown allows
+you to write using an easy-to-read, easy-to-write plain text format, then
+convert it to structurally valid XHTML (or HTML).
+```
+
+To open `nb browse` in the system's primary GUI web browser, use
+`nb browse --gui` / `nb browse -g`:
 
 ```bash
 # open the item with id 123 in the "sample" notebook in the system's primary GUI browser
@@ -1985,7 +2050,8 @@ nb add example/demo --type folder
 ```
 
 To list the items in a folder, pass the folder relative path to
-`nb`, `nb ls`, or `nb list` with a trailing slash:
+`nb`, [`nb ls`](#ls), [`nb list`](#list), or [`nb browse`](#browse)
+with a trailing slash:
 
 ```bash
 > nb example/demo/
@@ -2045,12 +2111,29 @@ nb add example:sample/demo/
 nb edit example:sample/demo/3
 ```
 
+[Browse](#-browsing) starting at any folder with [`nb browse`](#browse):
+
+```bash
+> nb browse example:sample/demo/
+❯nb · example : sample / demo /
+
+search: [                    ]
+
+[example:sample/demo/5] Title Five
+[example:sample/demo/4] Title Four
+[example:sample/demo/3] Title Three
+[example:sample/demo/2] Title Two
+[example:sample/demo/1] Title One
+```
+
+For more information about identifying folders, see [Selectors](#selectors).
+
 ### 📌 Pinning
 
 *Version 6.0.0-alpha*
 
-Items can be pinned so they appear first in `nb`, `nb ls`, and `nb
-browse`:
+Items can be pinned so they appear first in `nb`, [`nb ls`](#ls), and
+[`nb browse`](#browse):
 
 ```bash
 > nb
@@ -2104,9 +2187,9 @@ home
 ```
 
 `nb` can also be configured to pin notes that contain a specified
-hashtag or other search pattern. To enable tag / search-based pinning,
-set the `$NB_PINNED_PATTERN` environment variable to the desired tag
-or pattern.
+[`#hashtag`](#-tagging) or other search pattern. To enable tag / search-based
+pinning, set the `$NB_PINNED_PATTERN` environment variable to the desired
+[`#tag`](#-tagging) or pattern.
 
 For example, to treat all items tagged with `#pinned` as pinned items,
 add the following line to your `~/.nbrc` file, which can be opened in
@@ -5639,7 +5722,7 @@ bookmarked resource.
 
 `Optional`
 
-A list of tags represented as hashtags separated by individual spaces.
+A list of tags represented as `#hashtags` separated by individual spaces.
 
 ##### `## Content`
 

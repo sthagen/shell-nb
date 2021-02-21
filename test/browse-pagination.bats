@@ -5,12 +5,109 @@ load test_helper
 # non-breaking space
 export _S=" "
 
+@test "'browse' includes pagination on links." {
+  {
+    "${_NB}" init
+
+    declare __number=
+    for     __number in One Two Three Four Five Six Seven Eight Nine Ten
+    do
+      declare _content="Example content."
+
+      case "${__number}" in
+        One)
+          _content+=" [[Title Two]] • #example"
+          ;;
+        Two|Three|Six|Seven|Nine)
+          _content+=" #example"
+          ;;
+      esac
+
+      "${_NB}" add  "File ${__number}.md" \
+        --title     "Title ${__number}"   \
+        --content   "${_content}"
+    done
+
+    "${_NB}" notebooks add "Example Notebook"
+    "${_NB}" notebooks add "Sample Notebook"
+    "${_NB}" notebooks add "Demo Notebook"
+  }
+
+  run "${_NB}" browse --print --per-page 2 --terminal
+
+  printf "\${status}: '%s'\\n" "${status}"
+  printf "\${output}: '%s'\\n" "${output}"
+
+  [[ "${status}"  == 0                                      ]]
+  [[ "${output}"  =~ \<\!DOCTYPE\ html\>                    ]]
+
+  printf "%s\\n" "${output}" | grep       -q  \
+'<h1 class="header-crumbs" id="nb-home"><a.* href="http://localhost:6789/?--per-page=2"><span class="dim">❯</span>nb</a>'
+  printf "%s\\n" "${output}" | grep       -q  \
+'<span class="dim">·</span> <a.* href="http://localhost:6789/home:?--per-page=2">home</a></h1>'
+
+  printf "%s\\n" "${output}" | grep       -q  \
+'http://localhost:6789/home:10?--per-page=2" class="list-item">'
+  printf "%s\\n" "${output}" | grep       -q  \
+'http://localhost:6789/home:9?--per-page=2" class="list-item">'
+
+  printf "%s\\n" "${output}" | grep   -v  -q  \
+'http://localhost:6789/home:8?--per-page=2" class="list-item">'
+
+  printf "%s\\n" "${output}" | grep       -q  \
+'http://localhost:6789/home:?--page=2&amp;--per-page=2">next ❯'
+
+  run "${_NB}" browse 1 --print --per-page 2 --terminal
+
+  printf "\${status}: '%s'\\n" "${status}"
+  printf "\${output}: '%s'\\n" "${output}"
+
+  [[ "${status}"  == 0                                      ]]
+  [[ "${output}"  =~ \<\!DOCTYPE\ html\>                    ]]
+
+  printf "%s\\n" "${output}" | grep       -q  \
+'<h1 class="header-crumbs">'
+  printf "%s\\n" "${output}" | grep       -q  \
+'<a.* href="http://localhost:6789/?--per-page=2"><span class="dim">❯</span>nb</a>'
+  printf "%s\\n" "${output}" | grep       -q  \
+'<span class="dim">·</span> <a.* href="http://localhost:6789/home:?--per-page=2">home</a>'
+  printf "%s\\n" "${output}" | grep       -q  \
+'home</a> <span class="dim">:</span> <span class="dim">1</span>'
+
+  printf "%s\\n" "${output}" | grep       -q  \
+'<a href="http://localhost:6789/home:2?--per-page=2">\[\[Title Two\]\]</a>'
+  printf "%s\\n" "${output}" | grep       -q  \
+'<a href="http://localhost:6789/home:?--per-page=2&--query=%23example">#example</a></p>'
+
+  run "${_NB}" browse --notebooks --print --per-page 2 --terminal
+
+  printf "\${status}: '%s'\\n" "${status}"
+  printf "\${output}: '%s'\\n" "${output}"
+
+  [[ "${status}"  == 0                                      ]]
+  [[ "${output}"  =~ \<\!DOCTYPE\ html\>                    ]]
+
+  printf "%s\\n" "${output}" | grep       -q  \
+'<h1 class="header-crumbs">'
+  printf "%s\\n" "${output}" | grep       -q  \
+'<a.* href="http://localhost:6789/?--per-page=2"><span class="dim">❯</span>nb</a>'
+  printf "%s\\n" "${output}" | grep       -q  \
+'<span class="dim">·</span> <span class="dim">notebooks</span>'
+
+  printf "%s\\n" "${output}" | grep       -q  \
+'<p><a.*href="http://localhost:6789/Demo%20Notebook:?--per-page=2">Demo Notebook</a>'
+  printf "%s\\n" "${output}" | grep       -q  \
+'<p><a.*href="http://localhost:6789/Example%20Notebook:?--per-page=2">Example Notebook</a>'
+  printf "%s\\n" "${output}" | grep       -q  \
+'<p><a.*href="http://localhost:6789/Sample%20Notebook:?--per-page=2">Sample Notebook</a>'
+}
+
 @test "'browse' paginates lists." {
   {
     "${_NB}" init
 
-    local __number=
-    for   __number in One Two Three Four Five Six Seven Eight Nine Ten
+    declare __number=
+    for     __number in One Two Three Four Five Six Seven Eight Nine Ten
     do
       "${_NB}" add "File ${__number}.md" --title "Title ${__number}"
     done
@@ -21,75 +118,76 @@ export _S=" "
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
 
-  [[ "${status}"  == 0                                          ]]
-  [[ "${output}"  =~ \<\!DOCTYPE\ html\>                        ]]
+  [[ "${status}"  == 0                                      ]]
+  [[ "${output}"  =~ \<\!DOCTYPE\ html\>                    ]]
 
-  [[ "${output}"  =~ \
-        \<h1\ class=\"header-crumbs\"\ id=\"nb-home\"\>.*\<a\ href=\"http://localhost:6789/\"\>\<span\ class=\"dim\"\>❯\</span\>nb\</a\>  ]]
-  [[ "${output}"  =~ \
-        .*·.*\ \<a\ href=\"http://localhost:6789/home:\"\>home\</a\>.*\</h1\>     ]]
+  printf "%s\\n" "${output}" | grep -q \
+'<h1 class="header-crumbs" id="nb-home"><a.* href="http://localhost:6789/?--per-page=4"><span class="dim">❯</span>nb</a>'
+
+  printf "%s\\n" "${output}" | grep -q \
+'<span class="dim">·</span> <a.* href="http://localhost:6789/home:?--per-page=4">home</a></h1>'
 
   # 10-7
 
   [[    "${output}"  =~  \
-          \<p\>\<a\ href=\"http://localhost:6789/home:10\"\ class=\"list-item\"\> ]]
+\<p\>\<a.*\ href=\"http://localhost:6789/home:10\?--per-page=4\"\ class=\"list-item\"\> ]]
   [[    "${output}"  =~  \
-          .*\[.*home:10.*\].*${_S}Title${_S}Ten\</a\>\<br\ /\>                    ]]
+.*\[.*home:10.*\].*${_S}Title${_S}Ten\</a\>\<br\ /\>        ]]
 
   [[    "${output}"  =~  \
-          \<a\ href=\"http://localhost:6789/home:9\"\ class=\"list-item\"\>       ]]
+\<a.*\ href=\"http://localhost:6789/home:9\?--per-page=4\"\ class=\"list-item\"\>       ]]
   [[    "${output}"  =~  \
-          .*\[.*home:9.*\].*${_S}${_S}Title${_S}Nine\</a\>\<br\ /\>               ]]
+.*\[.*home:9.*\].*${_S}${_S}Title${_S}Nine\</a\>\<br\ /\>   ]]
 
   [[    "${output}"  =~  \
-          \<a\ href=\"http://localhost:6789/home:8\"\ class=\"list-item\"\>       ]]
+\<a.*\ href=\"http://localhost:6789/home:8\?--per-page=4\"\ class=\"list-item\"\>       ]]
   [[    "${output}"  =~  \
-          .*\[.*home:8.*\].*${_S}${_S}Title${_S}Eight\</a\>\<br\ /\>              ]]
+.*\[.*home:8.*\].*${_S}${_S}Title${_S}Eight\</a\>\<br\ /\>  ]]
 
   [[    "${output}"  =~  \
-          \<a\ href=\"http://localhost:6789/home:7\"\ class=\"list-item\"\>       ]]
+\<a.*\ href=\"http://localhost:6789/home:7\?--per-page=4\"\ class=\"list-item\"\>       ]]
   [[    "${output}"  =~  \
-          .*\[.*home:7.*\].*${_S}${_S}Title${_S}Seven\</a\>\<br\ /\>              ]]
+.*\[.*home:7.*\].*${_S}${_S}Title${_S}Seven\</a\>\<br\ /\>  ]]
 
   # 6-3
 
   [[ !  "${output}"  =~  \
-          \<p\>\<a\ href=\"http://localhost:6789/home:6\"\ class=\"list-item\"\>  ]]
+\<p\>\<a.*\ href=\"http://localhost:6789/home:6\?--per-page=4\"\ class=\"list-item\"\>  ]]
   [[ !  "${output}"  =~  \
-          .*\[.*home:6.*\].*${_S}${_S}Title${_S}Six\</a\>\<br\ /\>                ]]
+.*\[.*home:6.*\].*${_S}${_S}Title${_S}Six\</a\>\<br\ /\>    ]]
 
   [[ !  "${output}"  =~  \
-          \<a\ href=\"http://localhost:6789/home:5\"\ class=\"list-item\"\>       ]]
+\<a.*\ href=\"http://localhost:6789/home:5\?--per-page=4\"\ class=\"list-item\"\>       ]]
   [[ !  "${output}"  =~  \
-          .*\[.*home:5.*\].*${_S}${_S}Title${_S}Five\</a\>\<br\ /\>               ]]
+.*\[.*home:5.*\].*${_S}${_S}Title${_S}Five\</a\>\<br\ /\>   ]]
 
   [[ !  "${output}"  =~  \
-          \<a\ href=\"http://localhost:6789/home:4\"\ class=\"list-item\"\>       ]]
+\<a.*\ href=\"http://localhost:6789/home:4\?--per-page=4\"\ class=\"list-item\"\>       ]]
   [[ !  "${output}"  =~  \
-          .*\[.*home:4.*\].*${_S}${_S}Title${_S}Four\</a\>\<br\ /\>               ]]
+.*\[.*home:4.*\].*${_S}${_S}Title${_S}Four\</a\>\<br\ /\>   ]]
 
   [[ !  "${output}"  =~  \
-          \<a\ href=\"http://localhost:6789/home:3\"\ class=\"list-item\"\>       ]]
+\<a.*\ href=\"http://localhost:6789/home:3\?--per-page=4\"\ class=\"list-item\"\>       ]]
   [[ !  "${output}"  =~  \
-          .*\[.*home:3.*\].*${_S}${_S}Title${_S}Three\</a\>\<br\ /\>              ]]
+.*\[.*home:3.*\].*${_S}${_S}Title${_S}Three\</a\>\<br\ /\>  ]]
 
   # 2-1
 
   [[ !  "${output}"  =~  \
-          \<p\>\<a\ href=\"http://localhost:6789/home:2\"\ class=\"list-item\"\>  ]]
+\<p\>\<a.*\ href=\"http://localhost:6789/home:2\?--per-page=4\"\ class=\"list-item\"\>  ]]
   [[ !  "${output}"  =~  \
-          .*\[.*home:2.*\].*${_S}${_S}Title${_S}Two\</a\>\<br\ /\>                ]]
+.*\[.*home:2.*\].*${_S}${_S}Title${_S}Two\</a\>\<br\ /\>    ]]
 
   [[ !  "${output}"  =~  \
-          \<a\ href=\"http://localhost:6789/home:1\"\ class=\"list-item\"\>       ]]
+\<a.*\ href=\"http://localhost:6789/home:1\?--per-page=4\"\ class=\"list-item\"\>       ]]
   [[ !  "${output}"  =~  \
-          .*\[.*home:1.*\].*${_S}${_S}Title${_S}One\</a\>\<br\ /\>                ]]
+.*\[.*home:1.*\].*${_S}${_S}Title${_S}One\</a\>\<br\ /\>    ]]
 
   # pagination links
 
   [[    "${output}"  =~ \
-          \<p\>\<a\ href=\"http://localhost:6789/home:\?--page=2\&amp\;--per-page=4\"\>next\ ❯\</a\>\</p\>  ]]
-  [[ !  "${output}"  =~ ❮\ prev                                                                             ]]
+\<p\>\<a.*\ href=\"http://localhost:6789/home:\?--page=2\&amp\;--per-page=4\"\>next\ ❯\</a\>\</p\>  ]]
+  [[ !  "${output}"  =~ ❮\ prev ]]
 
   # page 2
 
@@ -98,76 +196,76 @@ export _S=" "
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
 
-  [[ "${status}"  == 0                                          ]]
-  [[ "${output}"  =~ \<\!DOCTYPE\ html\>                        ]]
+  [[ "${status}"  == 0                                      ]]
+  [[ "${output}"  =~ \<\!DOCTYPE\ html\>                    ]]
 
   [[ "${output}"  =~ \
-        \<h1\ class=\"header-crumbs\"\ id=\"nb-home\"\>.*\<a\ href=\"http://localhost:6789/\"\>\<span\ class=\"dim\"\>❯\</span\>nb\</a\>  ]]
+\<h1\ class=\"header-crumbs\"\ id=\"nb-home\"\>.*\<a.*\ href=\"http://localhost:6789/\?--per-page=4\"\>\<span\ class=\"dim\"\>❯\</span\>nb\</a\>  ]]
   [[ "${output}"  =~ \
-        .*·.*\ \<a\ href=\"http://localhost:6789/home:\"\>home\</a\>.*\</h1\>     ]]
+.*·.*\ \<a.*\ href=\"http://localhost:6789/home:\?--per-page=4\"\>home\</a\>.*\</h1\>   ]]
 
   # 10-7
 
   [[ !  "${output}"  =~  \
-          \<p\>\<a\ href=\"http://localhost:6789/home:10\"\ class=\"list-item\"\> ]]
+\<p\>\<a.*\ href=\"http://localhost:6789/home:10\?--per-page=4\"\ class=\"list-item\"\> ]]
   [[ !  "${output}"  =~  \
-          .*\[.*home:10.*\].*${_S}Title${_S}Ten\</a\>\<br\ /\>                    ]]
+.*\[.*home:10.*\].*${_S}Title${_S}Ten\</a\>\<br\ /\>        ]]
 
   [[ !  "${output}"  =~  \
-          \<a\ href=\"http://localhost:6789/home:9\"\ class=\"list-item\"\>       ]]
+\<a.*\ href=\"http://localhost:6789/home:9\?--per-page=4\"\ class=\"list-item\"\>       ]]
   [[ !  "${output}"  =~  \
-          .*\[.*home:9.*\].*${_S}${_S}Title${_S}Nine\</a\>\<br\ /\>               ]]
+.*\[.*home:9.*\].*${_S}${_S}Title${_S}Nine\</a\>\<br\ /\>   ]]
 
   [[ !  "${output}"  =~  \
-          \<a\ href=\"http://localhost:6789/home:8\"\ class=\"list-item\"\>       ]]
+\<a.*\ href=\"http://localhost:6789/home:8\?--per-page=4\"\ class=\"list-item\"\>       ]]
   [[ !  "${output}"  =~  \
-          .*\[.*home:8.*\].*${_S}${_S}Title${_S}Eight\</a\>\<br\ /\>              ]]
+.*\[.*home:8.*\].*${_S}${_S}Title${_S}Eight\</a\>\<br\ /\>  ]]
 
   [[ !  "${output}"  =~  \
-          \<a\ href=\"http://localhost:6789/home:7\"\ class=\"list-item\"\>       ]]
+\<a.*\ href=\"http://localhost:6789/home:7\?--per-page=4\"\ class=\"list-item\"\>       ]]
   [[ !  "${output}"  =~  \
-          .*\[.*home:7.*\].*${_S}${_S}Title${_S}Seven\</a\>\<br\ /\>              ]]
+.*\[.*home:7.*\].*${_S}${_S}Title${_S}Seven\</a\>\<br\ /\>  ]]
 
   # 6-3
 
   [[    "${output}"  =~  \
-          \<p\>\<a\ href=\"http://localhost:6789/home:6\"\ class=\"list-item\"\>  ]]
+\<p\>\<a.*\ href=\"http://localhost:6789/home:6\?--per-page=4\"\ class=\"list-item\"\>  ]]
   [[    "${output}"  =~  \
-          .*\[.*home:6.*\].*${_S}${_S}Title${_S}Six\</a\>\<br\ /\>                ]]
+.*\[.*home:6.*\].*${_S}${_S}Title${_S}Six\</a\>\<br\ /\>    ]]
 
   [[    "${output}"  =~  \
-          \<a\ href=\"http://localhost:6789/home:5\"\ class=\"list-item\"\>       ]]
+\<a.*\ href=\"http://localhost:6789/home:5\?--per-page=4\"\ class=\"list-item\"\>       ]]
   [[    "${output}"  =~  \
-          .*\[.*home:5.*\].*${_S}${_S}Title${_S}Five\</a\>\<br\ /\>               ]]
+.*\[.*home:5.*\].*${_S}${_S}Title${_S}Five\</a\>\<br\ /\>   ]]
 
   [[    "${output}"  =~  \
-          \<a\ href=\"http://localhost:6789/home:4\"\ class=\"list-item\"\>       ]]
+\<a.*\ href=\"http://localhost:6789/home:4\?--per-page=4\"\ class=\"list-item\"\>       ]]
   [[    "${output}"  =~  \
-          .*\[.*home:4.*\].*${_S}${_S}Title${_S}Four\</a\>\<br\ /\>               ]]
+.*\[.*home:4.*\].*${_S}${_S}Title${_S}Four\</a\>\<br\ /\>   ]]
 
   [[    "${output}"  =~  \
-          \<a\ href=\"http://localhost:6789/home:3\"\ class=\"list-item\"\>       ]]
+\<a.*\ href=\"http://localhost:6789/home:3\?--per-page=4\"\ class=\"list-item\"\>       ]]
   [[    "${output}"  =~  \
-          .*\[.*home:3.*\].*${_S}${_S}Title${_S}Three\</a\>\<br\ /\>              ]]
+.*\[.*home:3.*\].*${_S}${_S}Title${_S}Three\</a\>\<br\ /\>  ]]
 
   # 2-1
 
   [[ !  "${output}"  =~  \
-          \<p\>\<a\ href=\"http://localhost:6789/home:2\"\ class=\"list-item\"\>  ]]
+\<p\>\<a.*\ href=\"http://localhost:6789/home:2\?--per-page=4\"\ class=\"list-item\"\>  ]]
   [[ !  "${output}"  =~  \
-          .*\[.*home:2.*\].*${_S}${_S}Title${_S}Two\</a\>\<br\ /\>                ]]
+.*\[.*home:2.*\].*${_S}${_S}Title${_S}Two\</a\>\<br\ /\>    ]]
 
   [[ !  "${output}"  =~  \
-          \<a\ href=\"http://localhost:6789/home:1\"\ class=\"list-item\"\>       ]]
+\<a.*\ href=\"http://localhost:6789/home:1\?--per-page=4\"\ class=\"list-item\"\>       ]]
   [[ !  "${output}"  =~  \
-          .*\[.*home:1.*\].*${_S}${_S}Title${_S}One\</a\>\<br\ /\>                ]]
+.*\[.*home:1.*\].*${_S}${_S}Title${_S}One\</a\>\<br\ /\>    ]]
 
   # pagination links
 
   [[    "${output}"  =~ \
-          \<p\>\<a\ href=\"http://localhost:6789/home:\?--page=1\&amp\;--per-page=4\"\>❮\ prev\</a\>\ .*\·.*\   ]]
+\<p\>\<a.*\ href=\"http://localhost:6789/home:\?--page=1\&amp\;--per-page=4\"\>❮\ prev\</a\>\ .*\·.*\   ]]
   [[    "${output}"  =~ \
-          \<a\ href=\"http://localhost:6789/home:\?--page=3\&amp\;--per-page=4\"\>next\ ❯\</a\>\</p\>           ]]
+\<a.*\ href=\"http://localhost:6789/home:\?--page=3\&amp\;--per-page=4\"\>next\ ❯\</a\>\</p\>           ]]
 
   # page 3
 
@@ -176,74 +274,74 @@ export _S=" "
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
 
-  [[ "${status}"  == 0                                          ]]
-  [[ "${output}"  =~ \<\!DOCTYPE\ html\>                        ]]
+  [[ "${status}"  == 0                                      ]]
+  [[ "${output}"  =~ \<\!DOCTYPE\ html\>                    ]]
 
   [[ "${output}"  =~ \
-        \<h1\ class=\"header-crumbs\"\ id=\"nb-home\"\>.*\<a\ href=\"http://localhost:6789/\"\>\<span\ class=\"dim\"\>❯\</span\>nb\</a\>  ]]
+\<h1\ class=\"header-crumbs\"\ id=\"nb-home\"\>.*\<a.*\ href=\"http://localhost:6789/\?--per-page=4\"\>\<span\ class=\"dim\"\>❯\</span\>nb\</a\>  ]]
   [[ "${output}"  =~ \
-        .*·.*\ \<a\ href=\"http://localhost:6789/home:\"\>home\</a\>.*\</h1\>     ]]
+.*·.*\ \<a.*\ href=\"http://localhost:6789/home:\?--per-page=4\"\>home\</a\>.*\</h1\>   ]]
 
   # 10-7
 
   [[ !  "${output}"  =~  \
-          \<p\>\<a\ href=\"http://localhost:6789/home:10\"\ class=\"list-item\"\> ]]
+\<p\>\<a.*\ href=\"http://localhost:6789/home:10\?--per-page=4\"\ class=\"list-item\"\> ]]
   [[ !  "${output}"  =~  \
-          .*\[.*home:10.*\].*${_S}Title${_S}Ten\</a\>\<br\ /\>                    ]]
+.*\[.*home:10.*\].*${_S}Title${_S}Ten\</a\>\<br\ /\>        ]]
 
   [[ !  "${output}"  =~  \
-          \<a\ href=\"http://localhost:6789/home:9\"\ class=\"list-item\"\>       ]]
+\<a.*\ href=\"http://localhost:6789/home:9\?--per-page=4\"\ class=\"list-item\"\>       ]]
   [[ !  "${output}"  =~  \
-          .*\[.*home:9.*\].*${_S}${_S}Title${_S}Nine\</a\>\<br\ /\>               ]]
+.*\[.*home:9.*\].*${_S}${_S}Title${_S}Nine\</a\>\<br\ /\>   ]]
 
   [[ !  "${output}"  =~  \
-          \<a\ href=\"http://localhost:6789/home:8\"\ class=\"list-item\"\>       ]]
+\<a.*\ href=\"http://localhost:6789/home:8\?--per-page=4\"\ class=\"list-item\"\>       ]]
   [[ !  "${output}"  =~  \
-          .*\[.*home:8.*\].*${_S}${_S}Title${_S}Eight\</a\>\<br\ /\>              ]]
+.*\[.*home:8.*\].*${_S}${_S}Title${_S}Eight\</a\>\<br\ /\>  ]]
 
   [[ !  "${output}"  =~  \
-          \<a\ href=\"http://localhost:6789/home:7\"\ class=\"list-item\"\>       ]]
+\<a.*\ href=\"http://localhost:6789/home:7\?--per-page=4\"\ class=\"list-item\"\>       ]]
   [[ !  "${output}"  =~  \
-          .*\[.*home:7.*\].*${_S}${_S}Title${_S}Seven\</a\>\<br\ /\>              ]]
+.*\[.*home:7.*\].*${_S}${_S}Title${_S}Seven\</a\>\<br\ /\>  ]]
 
   # 6-3
 
   [[ !  "${output}"  =~  \
-          \<p\>\<a\ href=\"http://localhost:6789/home:6\"\ class=\"list-item\"\>  ]]
+\<p\>\<a.*\ href=\"http://localhost:6789/home:6\?--per-page=4\"\ class=\"list-item\"\>  ]]
   [[ !  "${output}"  =~  \
-          .*\[.*home:6.*\].*${_S}${_S}Title${_S}Six\</a\>\<br\ /\>                ]]
+.*\[.*home:6.*\].*${_S}${_S}Title${_S}Six\</a\>\<br\ /\>    ]]
 
   [[ !  "${output}"  =~  \
-          \<a\ href=\"http://localhost:6789/home:5\"\ class=\"list-item\"\>       ]]
+\<a.*\ href=\"http://localhost:6789/home:5\?--per-page=4\"\ class=\"list-item\"\>       ]]
   [[ !  "${output}"  =~  \
-          .*\[.*home:5.*\].*${_S}${_S}Title${_S}Five\</a\>\<br\ /\>               ]]
+.*\[.*home:5.*\].*${_S}${_S}Title${_S}Five\</a\>\<br\ /\>   ]]
 
   [[ !  "${output}"  =~  \
-          \<a\ href=\"http://localhost:6789/home:4\"\ class=\"list-item\"\>       ]]
+\<a.*\ href=\"http://localhost:6789/home:4\?--per-page=4\"\ class=\"list-item\"\>       ]]
   [[ !  "${output}"  =~  \
-          .*\[.*home:4.*\].*${_S}${_S}Title${_S}Four\</a\>\<br\ /\>               ]]
+.*\[.*home:4.*\].*${_S}${_S}Title${_S}Four\</a\>\<br\ /\>   ]]
 
   [[ !  "${output}"  =~  \
-          \<a\ href=\"http://localhost:6789/home:3\"\ class=\"list-item\"\>       ]]
+\<a.*\ href=\"http://localhost:6789/home:3\?--per-page=4\"\ class=\"list-item\"\>       ]]
   [[ !  "${output}"  =~  \
-          .*\[.*home:3.*\].*${_S}${_S}Title${_S}Three\</a\>\<br\ /\>              ]]
+.*\[.*home:3.*\].*${_S}${_S}Title${_S}Three\</a\>\<br\ /\>  ]]
 
   # 2-1
 
   [[    "${output}"  =~  \
-          \<p\>\<a\ href=\"http://localhost:6789/home:2\"\ class=\"list-item\"\>  ]]
+\<p\>\<a.*\ href=\"http://localhost:6789/home:2\?--per-page=4\"\ class=\"list-item\"\>  ]]
   [[    "${output}"  =~  \
-          .*\[.*home:2.*\].*${_S}${_S}Title${_S}Two\</a\>\<br\ /\>                ]]
+.*\[.*home:2.*\].*${_S}${_S}Title${_S}Two\</a\>\<br\ /\>    ]]
 
   [[    "${output}"  =~  \
-          \<a\ href=\"http://localhost:6789/home:1\"\ class=\"list-item\"\>       ]]
+\<a.*\ href=\"http://localhost:6789/home:1\?--per-page=4\"\ class=\"list-item\"\>       ]]
   [[    "${output}"  =~  \
-          .*\[.*home:1.*\].*${_S}${_S}Title${_S}One\</a\>\<br\ /\>                ]]
+.*\[.*home:1.*\].*${_S}${_S}Title${_S}One\</a\>\<br\ /\>    ]]
 
   # pagination links
 
   [[    "${output}"  =~ \
-          \<p\>\<a\ href=\"http://localhost:6789/home:\?--page=2\&amp\;--per-page=4\"\>❮\ prev\</a\>\</p\>  ]]
+\<p\>\<a.*\ href=\"http://localhost:6789/home:\?--page=2\&amp\;--per-page=4\"\>❮\ prev\</a\>\</p\>  ]]
   [[ !  "${output}"  =~ next\ ❯ ]]
 
   # page with list of items under pagination limit
@@ -253,67 +351,67 @@ export _S=" "
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
 
-  [[ "${status}"  == 0                                          ]]
-  [[ "${output}"  =~ \<\!DOCTYPE\ html\>                        ]]
+  [[ "${status}"  == 0                                      ]]
+  [[ "${output}"  =~ \<\!DOCTYPE\ html\>                    ]]
 
   [[ "${output}"  =~ \
-        \<h1\ class=\"header-crumbs\"\ id=\"nb-home\"\>.*\<a\ href=\"http://localhost:6789/\"\>\<span\ class=\"dim\"\>❯\</span\>nb\</a\>  ]]
+\<h1\ class=\"header-crumbs\"\ id=\"nb-home\"\>.*\<a.*\ href=\"http://localhost:6789/\?--per-page=11\"\>\<span\ class=\"dim\"\>❯\</span\>nb\</a\> ]]
   [[ "${output}"  =~ \
-        .*·.*\ \<a\ href=\"http://localhost:6789/home:\"\>home\</a\>.*\</h1\>     ]]
+.*·.*\ \<a.*\ href=\"http://localhost:6789/home:\?--per-page=11\"\>home\</a\>.*\</h1\>    ]]
 
   # 10-7
 
   [[    "${output}"  =~  \
-          \<p\>\<a\ href=\"http://localhost:6789/home:10\"\ class=\"list-item\"\> ]]
+\<p\>\<a.*\ href=\"http://localhost:6789/home:10\?--per-page=11\"\ class=\"list-item\"\>  ]]
   [[    "${output}"  =~  \
-          .*\[.*home:10.*\].*${_S}Title${_S}Ten\</a\>\<br\ /\>                    ]]
+.*\[.*home:10.*\].*${_S}Title${_S}Ten\</a\>\<br\ /\>        ]]
 
   [[    "${output}"  =~  \
-          \<a\ href=\"http://localhost:6789/home:9\"\ class=\"list-item\"\>       ]]
+\<a.*\ href=\"http://localhost:6789/home:9\?--per-page=11\"\ class=\"list-item\"\>        ]]
   [[    "${output}"  =~  \
-          .*\[.*home:9.*\].*${_S}${_S}Title${_S}Nine\</a\>\<br\ /\>               ]]
+.*\[.*home:9.*\].*${_S}${_S}Title${_S}Nine\</a\>\<br\ /\>   ]]
 
   [[    "${output}"  =~  \
-          \<a\ href=\"http://localhost:6789/home:8\"\ class=\"list-item\"\>       ]]
+\<a.*\ href=\"http://localhost:6789/home:8\?--per-page=11\"\ class=\"list-item\"\>        ]]
   [[    "${output}"  =~  \
-          .*\[.*home:8.*\].*${_S}${_S}Title${_S}Eight\</a\>\<br\ /\>              ]]
+.*\[.*home:8.*\].*${_S}${_S}Title${_S}Eight\</a\>\<br\ /\>  ]]
 
   [[    "${output}"  =~  \
-          \<a\ href=\"http://localhost:6789/home:7\"\ class=\"list-item\"\>       ]]
+\<a.*\ href=\"http://localhost:6789/home:7\?--per-page=11\"\ class=\"list-item\"\>        ]]
   [[    "${output}"  =~  \
-          .*\[.*home:7.*\].*${_S}${_S}Title${_S}Seven\</a\>\<br\ /\>              ]]
+.*\[.*home:7.*\].*${_S}${_S}Title${_S}Seven\</a\>\<br\ /\>  ]]
 
   # 6-3
 
   [[    "${output}"  =~  \
-          \<a\ href=\"http://localhost:6789/home:6\"\ class=\"list-item\"\>       ]]
+\<a.*\ href=\"http://localhost:6789/home:6\?--per-page=11\"\ class=\"list-item\"\>        ]]
   [[    "${output}"  =~  \
-          .*\[.*home:6.*\].*${_S}${_S}Title${_S}Six\</a\>\<br\ /\>                ]]
+.*\[.*home:6.*\].*${_S}${_S}Title${_S}Six\</a\>\<br\ /\>    ]]
 
   [[    "${output}"  =~  \
-          \<a\ href=\"http://localhost:6789/home:5\"\ class=\"list-item\"\>       ]]
+\<a.*\ href=\"http://localhost:6789/home:5\?--per-page=11\"\ class=\"list-item\"\>        ]]
   [[    "${output}"  =~  \
-          .*\[.*home:5.*\].*${_S}${_S}Title${_S}Five\</a\>\<br\ /\>               ]]
+.*\[.*home:5.*\].*${_S}${_S}Title${_S}Five\</a\>\<br\ /\>   ]]
 
   [[    "${output}"  =~  \
-          \<a\ href=\"http://localhost:6789/home:4\"\ class=\"list-item\"\>       ]]
+\<a.*\ href=\"http://localhost:6789/home:4\?--per-page=11\"\ class=\"list-item\"\>        ]]
   [[    "${output}"  =~  \
-          .*\[.*home:4.*\].*${_S}${_S}Title${_S}Four\</a\>\<br\ /\>               ]]
+.*\[.*home:4.*\].*${_S}${_S}Title${_S}Four\</a\>\<br\ /\>   ]]
 
   [[    "${output}"  =~  \
-          \<a\ href=\"http://localhost:6789/home:3\"\ class=\"list-item\"\>       ]]
+\<a.*\ href=\"http://localhost:6789/home:3\?--per-page=11\"\ class=\"list-item\"\>        ]]
   [[    "${output}"  =~  \
-          .*\[.*home:3.*\].*${_S}${_S}Title${_S}Three\</a\>\<br\ /\>              ]]
+.*\[.*home:3.*\].*${_S}${_S}Title${_S}Three\</a\>\<br\ /\>  ]]
 
   # 2-1
 
   [[    "${output}"  =~  \
-          \<a\ href=\"http://localhost:6789/home:2\"\ class=\"list-item\"\>       ]]
-  [[    "${output}"  =~  .*\[.*home:2.*\].*${_S}${_S}Title${_S}Two\</a\>\<br\ /\> ]]
+\<a.*\ href=\"http://localhost:6789/home:2\?--per-page=11\"\ class=\"list-item\"\>        ]]
+  [[    "${output}"  =~  .*\[.*home:2.*\].*${_S}${_S}Title${_S}Two\</a\>\<br\ /\>         ]]
 
   [[    "${output}"  =~  \
-          \<a\ href=\"http://localhost:6789/home:1\"\ class=\"list-item\"\>       ]]
-  [[    "${output}"  =~  .*\[.*home:1.*\].*${_S}${_S}Title${_S}One\</a\>\<br\ /\> ]]
+\<a.*\ href=\"http://localhost:6789/home:1\?--per-page=11\"\ class=\"list-item\"\>        ]]
+  [[    "${output}"  =~  .*\[.*home:1.*\].*${_S}${_S}Title${_S}One\</a\>\<br\ /\>         ]]
 
   # pagination links
 

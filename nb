@@ -6654,7 +6654,7 @@ HEREDOC
           fi
           ;;
         *)
-          if [[ -z "${_selector}" ]]
+          if [[ -z "${_selector}"   ]]
           then
             _selector="${__arg}"
           fi
@@ -6664,7 +6664,7 @@ HEREDOC
       shift
     done
 
-    if [[ -z "${_selector:-}"      ]]
+    if [[ -z "${_selector:-}"       ]]
     then
       _exit_1 _help "notebooks"
     elif [[ "${_selector:-}" =~ ^/  ]]
@@ -6680,7 +6680,7 @@ HEREDOC
         _maybe_notebook_path="${_maybe_notebook_path%/*}"
       done
 
-      if [[ -n "${_maybe_notebook_path:-}" ]]
+      if [[ -n "${_maybe_notebook_path:-}"  ]]
       then
         if [[ -n "${_local_notebook_path:-}"                          ]] &&
            [[ "${_maybe_notebook_path}" == "${_local_notebook_path}"  ]]
@@ -6694,7 +6694,7 @@ HEREDOC
     then
       local _selector_notebook="${_selector%%:*}"
 
-      if [[ -n "${_selector_notebook:-}" ]]
+      if [[ -n "${_selector_notebook:-}"    ]]
       then
         if [[ "${_selector_notebook:-}" == "local"  ]] &&
            [[ -n "${_local_notebook_path:-}"        ]]
@@ -7342,11 +7342,11 @@ do
       elif _notebooks current --selected
       then
         _ARGUMENTS+=("${__opt}")
-      elif [[ "${_SUBCOMMAND:-}" == "move" ]] &&
+      elif [[ "${_SUBCOMMAND:-}" == "move"    ]] &&
            ((${#_ARGUMENTS[@]}))
       then
         _ARGUMENTS+=("${__opt}")
-      elif [[ "${_SUBCOMMAND:-}" == "delete" ]]
+      elif [[ "${_SUBCOMMAND:-}" == "delete"  ]]
       then
         _ARGUMENTS+=("${__opt}")
       else
@@ -8004,22 +8004,22 @@ _get_unique_relative_path() {
   local _target_basename=
   local _unique_path=
 
-  if [[ -z "${_file_name:-}" ]]
+  if [[ -z "${_file_name:-}"    ]]
   then
     _file_name="$(date "+%Y%m%d%H%M%S")"
   fi
 
-  if [[ "${_file_path:-}" =~ / ]]
+  if [[ "${_file_path:-}" =~ /  ]]
   then
     _folder_path="${_file_path%\/*}"
   fi
 
-  if [[ "${_file_basename:-}" =~ ^\. ]]
+  if [[ "${_file_basename:-}" =~ ^\.  ]]
   then
     local _file_type="${_file_basename#*.}"
 
     _target_basename="${_file_name}.${_file_type}"
-  elif [[ -n "${_file_basename:-}" ]]
+  elif [[ -n "${_file_basename:-}"    ]]
   then
     _target_basename="${_file_basename}"
   else
@@ -8280,6 +8280,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
   })
 });
 </script>
+<meta name="referrer" content="no-referrer" />
 HEREDOC
 
   if [[ -n "${_source_path:-}" ]]
@@ -8320,7 +8321,8 @@ HEREDOC
     sed                           \
       -e '/<h1 class="title"/d'   \
       -e '/title-block-header/d'  \
-      -e 's/<img[^>]*>//g'
+      -e 's/<img[^>]*>//g'        \
+      -e "s/<a\ /<a\ rel=\"noopener\ noreferrer\"\ /g"
   }
 
   rm -f "${_html_head_temp_path:?}"
@@ -8331,43 +8333,100 @@ HEREDOC
 # Usage:
 #   _resolve_links <path> <notebook-path> [--browse]
 #
+# Options:
+#   --browse  Render for browsing and link #tags.
+#
 # Description:
-#   Read the file at <path>, resolve all [[wiki-style links]], wrap each
+#   Read the file at <path>, resolve all [[wiki-style links]] and wrap each
 #   one in a link to the target item, then print the updated file contents.
+#   When the --browse option is specified, #tags are linked to the search
+#   page for each tag.
 #
 #   By default, links are created with file:// URLs to the item on the
 #   local filesystem. With --browse, links are created with htt://
 #   URLs for the internal web server.
 _resolve_links() {
+  # Usage: _resolve_links_escape_link_component <string>
+  _resolve_links_escape_link_component() {
+    printf "%s\\n" "${1:-}" \
+      | sed                 \
+        -e 's/\//\\\//g'    \
+        -e 's/\[/\\\[/g'    \
+        -e 's/\]/\\\]/g'    \
+        -e 's/(/\\(/g'      \
+        -e 's/)/\\)/g'
+  }
+
+  # Usage: _resolve_links_tag_link_pattern <capture-group-number> [<query-string>]
+  _resolve_links_tag_link_pattern() {
+    local _capture_group="${1:-1}"
+    local _query_string="${2:-}"
+    local _replacement_url="http:\/\/localhost:${NB_SERVER_PORT}\/${_notebook_path##*/}:"
+
+    if [[ -n "${_query_string:-}" ]]
+    then
+      _replacement_url+="${_query_string}\&--query=%23\\${_capture_group}"
+    else
+      _replacement_url+="?--query=%23\\${_capture_group}"
+    fi
+
+    local _pattern=
+
+    case "${_file_path:-}" in
+      *\.html)
+        _pattern="<a\ href=\"${_replacement_url:-}\">\#\\${_capture_group}<\/a>"
+        ;;
+      *\.org)
+        _pattern="[[${_replacement_url:-}][\#\\${_capture_group}]]"
+        ;;
+      *)
+        _pattern="\#\\${_capture_group}"
+        ;;
+    esac
+
+    printf "%s\\n" "${_pattern}"
+  }
+
   local _file_path=
   local _for_browsing=0
   local _links=()
   local _matches=()
   local _notebook_name=
+  local _per_page=
+  local _terminal=0
 
-  local __arg=
-  for   __arg in "${@:-}"
+  while ((${#}))
   do
-    case "${__arg:-}" in
-      --browse)
-        _for_browsing=1
-        ;;
+    case "${1:-}" in
+      --browse)   _for_browsing=1                             ;;
+      --per-page) _per_page="${2:?}"                && shift  ;;
+      --page)     _option_value_is_present "${2:-}" && shift  ;;
+      --terminal) _terminal=1                                 ;;
       *)
         if [[   -z "${_file_path:-}"      ]]
         then
-          _file_path="${__arg:-}"
+          _file_path="${1:-}"
         elif [[ -z "${_notebook_path:-}"  ]]
         then
-          _notebook_path="${__arg:-}"
+          _notebook_path="${1:-}"
         fi
         ;;
     esac
+
+    shift
   done
 
   [[ ! -f "${_file_path:-}"     ]] && return 1
   [[ ! -d "${_notebook_path:-}" ]] && return 1
 
   cd "${_file_path%/*}"
+
+  local _query_string=
+
+  if ((_terminal)) && [[ -n "${_per_page:-}" ]]
+  then
+    _query_string="?--per-page=${_per_page:-}"
+  fi
 
   local _repo_path=
   _repo_path="$(git rev-parse --show-toplevel 2>/dev/null || :)"
@@ -8432,14 +8491,15 @@ _resolve_links() {
         then
           _links+=("[[${_selector:-}]]")
         else
+          local _target_url="http://localhost:${NB_SERVER_PORT}/${_id_selector:-}${_query_string:-}"
+
           case "${_file_path:-}" in
             *\.html)
-              _links+=(
-                "<a href=\"http://localhost:${NB_SERVER_PORT}/${_id_selector:-}\">[[${_selector:-}]]</a>"
+              _links+=("<a href=\"${_target_url:-}\">[[${_selector:-}]]</a>"
               )
               ;;
             *\.org)
-              _links+=("[[http://localhost:${NB_SERVER_PORT}/${_id_selector:-}][[[${_selector:-}]]]]")
+              _links+=("[[${_target_url:-}][[[${_selector:-}]]]]")
               ;;
             *)
               _links+=("[[${_selector:-}]]")
@@ -8471,17 +8531,6 @@ _resolve_links() {
       fi
     fi
   done
-
-  # Usage: _resolve_links_escape_link_component <string>
-  _resolve_links_escape_link_component() {
-    printf "%s\\n" "${1:-}" \
-      | sed                 \
-        -e 's/\//\\\//g'    \
-        -e 's/\[/\\\[/g'    \
-        -e 's/\]/\\\]/g'    \
-        -e 's/(/\\(/g'      \
-        -e 's/)/\\)/g'
-  }
 
   local _sed_arguments=()
   local _seen_matches=()
@@ -8517,43 +8566,32 @@ _resolve_links() {
 
       return 0
     else
-      _resolve_links_pattern() {
-        local _capture_group="${1:-1}"
-        local _pattern=
-        local _replacement_url="http:\/\/localhost:${NB_SERVER_PORT}\/"
-        _replacement_url+="${_notebook_path##*/}:?--query=%23\\${_capture_group}"
-
-        case "${_file_path:-}" in
-          *\.html)
-            _pattern="<a\ href=\"${_replacement_url:-}\">\#\\${_capture_group}<\/a>"
-            ;;
-          *\.org)
-            _pattern="[[${_replacement_url:-}][\#\\${_capture_group}]]"
-            ;;
-          *)
-            _pattern="\#\\${_capture_group}"
-            ;;
-        esac
-
-        printf "%s\\n" "${_pattern}"
-      }
+      local _pattern_2=
+      _pattern_2="$(
+        _resolve_links_tag_link_pattern "2" "${_query_string:-}"
+      )"
 
       if [[ "${_file_path:-}" =~ \.html ]]
       then
         if grep -q "<\/body>" "${_file_path:-}"
         then
-          sed -E \
-            -e "/<body>/,/<\/body>/ s/([^[])\#([A-Za-z0-9_\-]+)/\1$(_resolve_links_pattern "2")/g"
+          sed -E  \
+            -e "/<body>/,/<\/body>/ s/([^[])\#([A-Za-z0-9_\-]+)/\1${_pattern_2}/g"
         else
-          sed -E \
-            -e "s/([^[])\#([A-Za-z0-9_\-]+)/\1$(_resolve_links_pattern "2")/g"
+          sed -E  \
+            -e "s/([^[])\#([A-Za-z0-9_\-]+)/\1${_pattern_2}/g"
         fi
       else
-        sed -E                                                                        \
-          -e "s/^\#([A-Za-z0-9_\-]+)$/$(_resolve_links_pattern "1")/g"                \
-          -e "s/([^[])\#([A-Za-z0-9_\-]+)$/\1$(_resolve_links_pattern "2")/g"         \
-          -e "s/^\#([A-Za-z0-9_\-]+)([^]])/$(_resolve_links_pattern "1")\2/g"         \
-          -e "s/([^[])\#([A-Za-z0-9_\-]+)([^]])/\1$(_resolve_links_pattern "2")\3/g"
+        local _pattern_1=
+        _pattern_1="$(
+          _resolve_links_tag_link_pattern "1" "${_query_string:-}"
+        )"
+
+        sed -E    \
+          -e "s/^\#([A-Za-z0-9_\-]+)$/${_pattern_1}/g"                \
+          -e "s/([^[])\#([A-Za-z0-9_\-]+)$/\1${_pattern_2}/g"         \
+          -e "s/^\#([A-Za-z0-9_\-]+)([^]])/${_pattern_1}\2/g"         \
+          -e "s/([^[])\#([A-Za-z0-9_\-]+)([^]])/\1${_pattern_2}\3/g"
       fi
     fi
   }
@@ -14030,7 +14068,7 @@ _browse() {
 
         if ((_terminal_browser))
         then
-          _url_params+="?--page=${_current_page}&--per-page=${_per_page}&--terminal"
+          _url_params+="?--per-page=${_per_page}"
         fi
 
         printf "<a href=\"http://localhost:%s/%s\" class=\"list-item\">%s</a><br>\\n" \
@@ -14147,12 +14185,11 @@ HEREDOC
   # _browse_render_header()
   #
   # Usage:
-  #   _browse_render_header <selector>
+  #   _browse_render_header <selector> [--per-page <limit>] [--terminal]
   #
   # Description:
   #   Print a context-aware, linked Markdown header.
   _browse_render_header() {
-    local _current_page=1
     local _per_page="${NB_BROWSE_PER_PAGE:-30}"
     local _selector=
     local _terminal_browser=0
@@ -14160,10 +14197,10 @@ HEREDOC
     while ((${#}))
     do
       case "${1:-}" in
-        --page)     _current_page="${2:?}"  && shift  ;;
-        --per*)     _per_page="${2:?}"      && shift  ;;
-        --terminal) _terminal_browser=1               ;;
-        *)          _selector="${1:-}"                ;;
+        --page)     _option_value_is_present "${2:-}" && shift  ;;
+        --per*)     _per_page="${2:?}"                && shift  ;;
+        --terminal) _terminal_browser=1                         ;;
+        *)          _selector="${1:-}"                          ;;
       esac
 
       shift
@@ -14173,7 +14210,7 @@ HEREDOC
 
     if ((_terminal_browser))
     then
-      _url_params+="?--page=${_current_page}&--per-page=${_per_page}&--terminal"
+      _url_params+="?--per-page=${_per_page}"
     fi
 
     local _header_content="\
@@ -14291,19 +14328,30 @@ HEREDOC
   # _browse_render_item()
   #
   # Usage:
-  #   _browse_render_item <path>
+  #   _browse_render_item <path> [--per-page <limit>] [--terminal]
   #
   # Description:
   #   Render an item to HTML with links resolved to internal web server.
   _browse_render_item() {
     local _header_arguments=()
+    local _pagination_arguments=()
     local _selector=
 
     while ((${#}))
     do
       case "${1:-}" in
-        --page|--per*)  _header_arguments+=("${1:?}" "${2:?}") && shift ;;
-        --terminal)     _header_arguments+=("--terminal")               ;;
+        --page)
+          _option_value_is_present "${2:-}" && shift
+          ;;
+        --per-page)
+          _pagination_arguments+=("${1:?}" "${2:?}")
+          _header_arguments+=("${1:?}" "${2:?}")
+          shift
+          ;;
+        --terminal)
+          _pagination_arguments+=("--terminal")
+          _header_arguments+=("--terminal")
+          ;;
         *)
           _selector="${1:-}"
           _header_arguments+=("${_selector}")
@@ -14334,7 +14382,9 @@ HEREDOC
       _linked_temp_file_path="$(_temp file ".org" --touch)"
 
       # NOTE: avoid pandoc bug with brackets in org link descriptions
-      _resolve_links "${_source_path}" "${_notebook_path}"  \
+      _resolve_links "${_source_path}"                      \
+        "${_notebook_path}"                                 \
+        "${_pagination_arguments[@]:-}"                     \
         --browse                                            \
         | sed -E                                            \
           -e "s/\]\[\[\[/\]\[••/g"                          \
@@ -14355,7 +14405,10 @@ HEREDOC
         --include-before-body="${_header_temp_path}"        \
         --render-to-html >> "${_unlinked_temp_file_path}"
 
-      _resolve_links "${_unlinked_temp_file_path}" "${_notebook_path}" --browse
+      _resolve_links "${_unlinked_temp_file_path}"          \
+        "${_notebook_path}"                                 \
+        "${_pagination_arguments[@]:-}"                     \
+        --browse
     fi
 
     return 0
@@ -14364,23 +14417,19 @@ HEREDOC
   # _browse_render_notebooks()
   #
   # Usage:
-  #   _browse_render_notebooks [--terminal]
+  #   _browse_render_notebooks [--per-page] [--terminal]
   #
   # Description:
   #   Print an HTML page listing notebooks.
   _browse_render_notebooks() {
-    local _current_page=1
     local _pagination_arguments=()
     local _per_page="${NB_BROWSE_PER_PAGE:-30}"
-    local _terminal_browser=0
 
     while ((${#}))
     do
       case "${1:-}" in
         --page)
-          _current_page="${2:?}"
-          _pagination_arguments+=("${1:-}" "${2:?}")
-          shift
+          _option_value_is_present "${2:-}" && shift
           ;;
         --per*)
           _per_page="${2:?}"
@@ -14388,8 +14437,7 @@ HEREDOC
           shift
           ;;
         --terminal)
-          _terminal_browser=1
-          _pagination_arguments+=("${1:-}")
+          _pagination_arguments+=("--terminal")
           ;;
       esac
 
@@ -14398,16 +14446,16 @@ HEREDOC
 
     local _url_params=
 
-    if ((_terminal_browser))
+    if _contains "--terminal" "${_pagination_arguments[@]:-}"
     then
-      _url_params+="?--page=${_current_page}&--per-page=${_per_page}&--terminal"
+      _url_params+="?--per-page=${_per_page}"
     fi
 
     local _notebook_names=()
     _notebook_names=($(_notebooks --names --unarchived --no-color))
 
     {
-      printf "%s\\n" "$(_browse_render_header)"
+      printf "%s\\n" "$(_browse_render_header "${_pagination_arguments[@]:-}")"
 
       local _separator="<span class=\"dim\">·</span>"
       local _test_line=
@@ -14612,6 +14660,8 @@ HEREDOC
       local _http_header_line=
       read -r _http_header_line
 
+      # detect browser type
+
       # turn on case-insensitive matching
       shopt -s nocasematch
       if [[ "${_http_header_line}"      =~ User-Agent     ]]
@@ -14629,26 +14679,42 @@ HEREDOC
       shopt -u nocasematch
     done
 
+    # detect presence of parameters overriding browser type
+
+    if [[ "${_request_uri}" =~ --terminal           ]]
+    then
+      _terminal_browser=1
+    fi
+
+    if [[ "${_request_uri}" =~ --gui                ]]
+    then
+      _terminal_browser=0
+    fi
+
+    # retrieve pagination and query values from parameters
+
     local _page_number=1
 
-    if [[ "${_request_uri}" =~ --page=([0-9]+) ]]
+    if [[ "${_request_uri}" =~ --page=([0-9]+)      ]]
     then
       _page_number="${BASH_REMATCH[1]}"
     fi
 
     local _per_page="${NB_BROWSE_PER_PAGE:-30}"
 
-    if [[ "${_request_uri}" =~ --per-page=([0-9]+) ]]
+    if [[ "${_request_uri}" =~ --per-page=([0-9]+)  ]]
     then
       _per_page="${BASH_REMATCH[1]}"
     fi
 
     local _query=
 
-    if [[ "${_request_uri}" =~ --query=([^&]+) ]]
+    if [[ "${_request_uri}" =~ --query=([^&]+)      ]]
     then
       _query="${BASH_REMATCH[1]//%23/\#}"
     fi
+
+    # prepare response
 
     local _request_uri_base="${_request_uri%\?--*}" # strip parameters
 
@@ -14662,10 +14728,13 @@ HEREDOC
 
     local _arguments=()
 
+    if [[ -n "${_per_page:-}"           ]]
+    then
+      _arguments+=("--per-page" "${_per_page}")
+    fi
+
     if ((_terminal_browser))
     then
-      _arguments+=("--page"     "${_page_number}")
-      _arguments+=("--per-page" "${_per_page}")
       _arguments+=("--terminal")
     fi
 
@@ -14681,11 +14750,20 @@ HEREDOC
         _browse_respond_with 404
       else
         _arguments+=("${_selector_path}")
-        _arguments+=("--page"     "${_page_number}")
-        _arguments+=("--per-page" "${_per_page}")
 
         if [[ -d "${_selector_path:-}"  ]]
         then
+          if [[ -n "${_page_number:-}"  ]]
+          then
+            _arguments+=("--page" "${_page_number}")
+          fi
+
+          if [[ -n "${_per_page:-}"     ]] &&
+             ! _contains "--per-page" "${_arguments[@]:-}"
+          then
+            _arguments+=("--per-page" "${_per_page}")
+          fi
+
           if [[ -n "${_query:-}"        ]]
           then
             _arguments+=("--query" "${_query}")
@@ -14696,10 +14774,10 @@ HEREDOC
           if _file_is_text "${_selector_path:-}" ||
              [[ "${_selector_path:-}" =~ \.docx$|\.epub$|\.odt$ ]]
           then
-            _browse_render_item     "${_arguments[@]:-}"  >> "${_temp_file}"
+            _browse_render_item   "${_arguments[@]:-}"    >> "${_temp_file}"
           elif _file_is_encrypted "${_selector_path:-}"
           then
-            _browse_respond_with 415 \
+            _browse_respond_with 415    \
               "415 $(_browse_http_response_message 415): File is encrypted."
           else
             _browse_respond_with 415
@@ -14755,8 +14833,8 @@ HEREDOC
   }
 
   local _browse_notebooks=0
-  local _browse_page=1
   local _browse_per_page=
+  local _force_terminal_request=0
   local _only_serve=0
   local _open_gui=0
   local _print_browse_container=0
@@ -14766,6 +14844,7 @@ HEREDOC
   local _print_output=0
   local _search_query=
   local _selector=
+  local _target_page=
 
   while ((${#}))
   do
@@ -14789,7 +14868,7 @@ HEREDOC
         _browse_notebooks=1
         ;;
       --page)
-        _browse_page="$(_option_get_value "${1:-}" "${2:-}")"
+        _target_page="$(_option_get_value "${1:-}" "${2:-}")"
         shift
         ;;
       --per*page)
@@ -14809,6 +14888,9 @@ HEREDOC
         ;;
       -s|--serve*)
         _only_serve=1
+        ;;
+      --terminal)
+        _force_terminal_request=1
         ;;
       *)
         _selector="${1:-}"
@@ -14852,9 +14934,12 @@ HEREDOC
 
   # configure pagination
 
-  if ! ((_open_gui))          &&
-     ! _web_browser --gui     &&
-     ! ((_only_serve))
+  if ((_force_terminal_request))  ||
+     ! {
+        ((_open_gui))             ||
+        _web_browser --gui        ||
+        ((_only_serve))
+      }
   then
     if [[ -z "${_browse_per_page:-}"  ]]
     then # set per page based on terminal height
@@ -14871,7 +14956,7 @@ HEREDOC
 
     if [[ -n "${_browse_per_page:-}" ]]
     then
-      _arguments+=("--page" "${_browse_page}" "--per-page" "${_browse_per_page}")
+      _arguments+=( "--per-page" "${_browse_per_page}")
       _arguments+=("--terminal")
 
       if [[ "${_request_url:-}" =~ \?--query= ]]
@@ -14881,7 +14966,13 @@ HEREDOC
         _request_url+="?"
       fi
 
-      _request_url+="--page=${_browse_page}&--per-page=${_browse_per_page}"
+      _request_url+="--per-page=${_browse_per_page}&--terminal"
+    fi
+
+    if [[ -n "${_target_page:-}" ]]
+    then
+      _argument+=("--page" "${_target_page:-}")
+      _request_url+="&--page=${_target_page}"
     fi
   fi
 
@@ -15561,7 +15652,7 @@ _settings() {
     elif [[ "${1}" == "--id" ]]
     then
       _get_id=1
-      [[ -z "${2:-}" ]] && return 1
+      [[ -z "${2:-}"  ]] && return 1
       _id_or_name="${2:-}"
     else
       _id_or_name="${1}"
@@ -16287,8 +16378,8 @@ HEREDOC
       then
         eval "${_normalized_input}"
       elif _command_name="$(
-        printf "%s\\n" "${_normalized_input}" \
-          | grep --only-matching --color=never \
+        printf "%s\\n" "${_normalized_input}"   \
+          | grep --only-matching --color=never  \
               -e '^code'    \
               -e '^emacs'   \
               -e '^gvim'    \
