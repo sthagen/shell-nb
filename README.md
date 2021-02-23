@@ -19,7 +19,7 @@ and knowledge base application with:
 
 - plain-text data storage,
 - [encryption](#password-protected-encrypted-notes-and-bookmarks),
-- [filtering](#listing-notes), [pinning](#-pinning), [tagging](#-tagging), and [search](#-search),
+- [filtering](#listing-notes), [pinning](#-pinning), [#tagging](#-tagging), and [search](#-search),
 - [Git](https://git-scm.com/)-backed [versioning](#-revision-history) and [syncing](#-git-sync),
 - [Pandoc](https://pandoc.org/)-backed [conversion](#%EF%B8%8F-import--export),
 - <a href="#-linking">[[wiki-style linking]]</a> with terminal-first [browsing](#-browsing),
@@ -149,8 +149,9 @@ they are available.
 Recommended:
 
 - [`bat`](https://github.com/sharkdp/bat)
-- [Pandoc](https://pandoc.org/)
-- [`rg` / ripgrep](https://github.com/BurntSushi/ripgrep)
+- [`ncat`](https://nmap.org/ncat/)
+- [`pandoc`](https://pandoc.org/)
+- [`rg`](https://github.com/BurntSushi/ripgrep)
 - [`tig`](https://github.com/jonas/tig)
 - [`w3m`](https://en.wikipedia.org/wiki/W3m)
 
@@ -184,7 +185,7 @@ Also supported for various enhancements:
 
 #### macOS / Homebrew
 
-To install with [Homebrew](https://brew.sh/):
+To install version 5.7.8 with [Homebrew](https://brew.sh/):
 
 ```bash
 brew tap xwmx/taps
@@ -198,7 +199,7 @@ above and completion scripts for Bash and Zsh.
 
 ##### npm
 
-To install with [npm](https://www.npmjs.com/package/nb.sh):
+To install version 5.7.8 with [npm](https://www.npmjs.com/package/nb.sh):
 
 ```bash
 npm install -g nb.sh
@@ -451,7 +452,7 @@ Added: [10] example_title.md "Example Title"
 
 Tags can be added with the `--tags <tag1>,<tag2>...` option, which takes
 a comma separated list of tags, converts them to
-[`#hashtags`](#-tagging), and inserts them between the title and content:
+[#hashtags](#-tagging), and inserts them between the title and content:
 
 ```bash
 > nb add "Example content." --title "Tagged Example" --tags tag1,tag2
@@ -611,7 +612,7 @@ title is displayed instead of the filename and first line.
 
 Markdown titles can be defined within a note using
 [either Markdown `h1` style](https://daringfireball.net/projects/markdown/syntax#header)
-or [YAML front matter](https://jekyllrb.com/docs/front-matter/):
+or [YAML front matter](#front-matter):
 
 ```markdown
 # Example Title
@@ -1339,7 +1340,7 @@ permission.
 ```
 
 Bookmarks can be tagged using the `-t` / `--tags` option. Tags are converted
-into [`#hashtags`](#-tagging):
+into [#hashtags](#-tagging):
 
 ```bash
 nb https://example.com --tags tag1,tag2
@@ -1644,12 +1645,12 @@ See [`bookmark help`](#bookmark-help) for more information.
 
 ### 🏷 Tagging
 
-`nb` recognizes [`#hashtags`](#-tagging) defined anywhere within a
+`nb` recognizes [#hashtags](#-tagging) defined anywhere within a
 text document. Notes and bookmarks can be tagged when they are created
 using the `--tags <tag1>,<tag2>...` option, which is available with
 [`nb add`](#add), [`nb <url>`](#nb-help), and
 [`nb bookmark`](#bookmark). `--tags` takes a comma-separated list of
-tags, converts them to [`#hashtags`](#-tagging), and adds them to the
+tags, converts them to [#hashtags](#-tagging), and adds them to the
 document.
 
 Tags added to notes with `nb add --tags` are placed between the title
@@ -1723,7 +1724,7 @@ nb q "#tag1" --or "#tag2"
 
 Linked tags can be [browsed](#-browsing) with [`nb browse`](#browse),
 providing another dimension of browsability in terminal and GUI web
-browers, complimenting <a href="#-linking">[[wiki-style linking]]</a>.
+browsers, complimenting <a href="#-linking">[[wiki-style linking]]</a>.
 
 Tags in notes, bookmarks, files in text-based formats, Word `.docx` documents,
 and [Open Document](https://en.wikipedia.org/wiki/OpenDocument) `.odt`
@@ -1830,13 +1831,13 @@ For more information about identifying items, see [Selectors](#selectors).
 
 *Version 6.0.0-alpha*
 
-Use [`nb browse`](#browse) to browse, view, and search linked notes,
-bookmarks, notebooks, folders, and other items using a terminal or
-GUI web brower.
+Use [`nb browse`](#browse) (shortcut: `nb br`) to browse, view, and search
+linked notes, bookmarks, notebooks, folders, and other items using a terminal
+or GUI web browser.
 
 `nb browse` includes an embedded, terminal-first web application that
 renders <a href="#-linking">[[wiki-style links]]</a> and
-[#tags](#-tagging)
+[#hashtags](#-tagging)
 as internal links, enabling you to browse your notes and notebooks in web
 browsers, including seamlessly browsing to and from the offsite links in
 bookmarks and notes.
@@ -1890,7 +1891,7 @@ supported.
 browser set in the `$BROWSER` environment variable.
 
 To open a specific item in `nb browse`, pass the [selector](#selectors)
-for the item, folder, or notebook:
+for the item, folder, or notebook to `nb browse`:
 
 ```bash
 # open the item titled "Example Title" in the folder named "Sample" in the "example" notebook
@@ -1910,10 +1911,12 @@ More example content:
   • three
 ```
 
+Items can also be browsed with [`nb show --browse`](#show) /
+[`nb show -b`](#show), which behaves identically.
+
 The `nb browse` interface includes breadcrumbs that can be used to
 quickly navigate to back to parent folders, the current notebook, or
 jump to other notebooks.
-
 
 `nb browse` is particularly useful for [bookmarks](#-bookmarks). Cached
 content is rendered in the web browser, and internal and external links
@@ -1967,14 +1970,33 @@ nb browse sample:123 --gui
 ```
 
 `nb browse` includes a search field that can be used for easy searches
-in the current notebook or folder when browsing. For full-featured
+in the current notebook or folder while browsing. For full-featured
 search, see [Search](#-search) and [`nb search`](#search).
 
 `nb browse` depends on [`ncat`](https://nmap.org/ncat/) and
 [`pandoc`](https://pandoc.org/). When only `pandoc` is available, the
-current note will be rendered and links go to unrendered, original files.
+current note will be rendered and
+<a href="#-linking">[[wiki-style links]]</a>
+go to unrendered, original files.
 If neither `pandoc` nor `ncat` is available, `nb` falls back to
 [`nb show`](#show).
+
+##### `browse` Privacy
+
+Terminal web browsers don't use JavaScript, so visits are not visible to
+many web analytics tools. `nb browse` includes a number of additional
+features to enhance privacy and avoid leaking information:
+
+- Page content is cached locally within each bookmark file, making it readable
+  in a terminal or GUI browser without visiting the original website.
+- `<img>` tags in bookmarked content are removed to avoid requests.
+- Outbound links are automatically rewritten to use an
+  [exit page redirect](https://geekthis.net/post/hide-http-referer-headers/#exit-page-redirect)
+  to mitigate leaking information via the
+  [referer header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referer).
+- All pages include the `<meta name="referrer" content="no-referrer" />` tag.
+- Links include a `rel="noopener noreferrer"` attribute.
+- `lynx` is opened with the `-noreferer` option.
 
 ##### Shortcut Alias: `br`
 
@@ -2014,7 +2036,7 @@ to physical zettelkasten note-taking.
 | numbering         | ids and [selectors](#selectors)               |
 | slip boxes        | [notebooks](#-notebooks)                      |
 | tags              | [#tags](#-tagging)                            |
-| metadata          | YAML front matter                             |
+| metadata          | [front matter](#front-matter)                 |
 | cross-references  |  <a href="#-linking">[[wiki-style links]]</a> |
 | fast note-taking  | [`nb add` / `nb a`](#adding-notes)            |
 
@@ -2187,9 +2209,9 @@ home
 ```
 
 `nb` can also be configured to pin notes that contain a specified
-[`#hashtag`](#-tagging) or other search pattern. To enable tag / search-based
+[#hashtag](#-tagging) or other search pattern. To enable tag / search-based
 pinning, set the `$NB_PINNED_PATTERN` environment variable to the desired
-[`#tag`](#-tagging) or pattern.
+[#tag](#-tagging) or pattern.
 
 For example, to treat all items tagged with `#pinned` as pinned items,
 add the following line to your `~/.nbrc` file, which can be opened in
@@ -2221,8 +2243,8 @@ home
 ### 🔍 Search
 
 Use [`nb search`](#search) (shortcut: `nb q`) to perform full
-text searches, with support for regular expressions, tags, and both
-`AND` and `OR` queries:
+text searches, with support for regular expressions, [#tags](#-tagging),
+and both `AND` and `OR` queries:
 
 ```bash
 # search current notebook for "example query"
@@ -2327,7 +2349,7 @@ nb q "example|sample"
 nb q "example" --or "sample"
 ```
 
-`--or` and `--and` queries can be used together to create complex queries:
+`--or` and `--and` queries can be used together:
 
 ```bash
 nb q "example" --or "sample" --and "demo"
@@ -3589,6 +3611,60 @@ for a practical example using both [`show <selector> --filename`](#show) and
 [`notebooks current --path`](#notebooks) along with other
 subcommands called using their underscore-prefixed function names.
 
+### Metadata
+
+Metadata in `nb` is primarily derived from git, the filesystem, and file
+content, treating git and the filesystem like overlapping document databases.
+For example, displayed timestamps are derived from
+[`git log`](https://git-scm.com/docs/git-log), with [`nb show --added`](#show)
+displaying the datetime of the first commit containing the file and
+[`nb show --updated`](#show) displaying the datetime of the last commit in
+which the file was modified.
+
+`nb` also uses plain-text files to store ids and state information in
+git, including
+[`.index` files](https://github.com/xwmx/nb#index-files),
+[`.pindex` files](https://github.com/xwmx/nb#pindex-files),
+and [`.archived` files](https://github.com/xwmx/nb#archived-notebooks).
+
+#### Front Matter
+
+User-defined metadata can be added to notes in `nb` using ["front
+matter"](https://jekyllrb.com/docs/front-matter/). Front matter is a
+simple, human accessible, and future-proof method for defining metadata
+fields in plain text and is well supported in tools for working with
+Markdown.
+
+Front matter is defined within a Markdown file with triple-dashed lines
+(`---`) indicating the start and end of the block, with each field represented
+by a key name with a colon followed by the value:
+
+
+```markdown
+---
+title: Example Title
+author: xwmx
+year: 2021
+---
+
+Example content.
+
+More example content:
+
+- one
+- two
+- three
+```
+
+Any metadata can be placed in the front matter block. `nb` uses the
+`title:` field for listing, filtering, and selecting items, if one is
+present, and ignores any other fields.
+
+The simple `key: value` syntax is suitable for many metadata fields.
+More complex data can be defined using additional
+[YAML](https://en.wikipedia.org/wiki/YAML)
+capabilities.
+
 ### > `nb` Interactive Shell
 
 `nb` has an interactive shell that can be started with
@@ -3799,10 +3875,10 @@ Usage:
   nb settings (get | show | unset) (<name> | <number>)
   nb settings set (<name> | <number>) <value>
   nb shell [<subcommand> [<options>...] | --clear-history]
-  nb show (<id> | <filename> | <path> | <title>) [[-a | --added] |
-          --filename | --id | --info-line | --path | [-p | --print]
-          [-r | --render] | --title | --type [<type>] | [-u | --updated]]
-          [--no-color]
+  nb show [<notebook>:](<id> | <filename> | <path> | <title>)
+          [[-a | --added] | [-b | --browse] | --filename | --id | --info-line |
+          --path | [-p | --print] [-r | --render] | --title | --type [<type>] |
+          [-u | --updated]] [--no-color]
   nb show <notebook>
   nb subcommands [add <name>...] [alias <name> <alias>]
                  [describe <name> <usage>]
@@ -3818,7 +3894,7 @@ Usage:
 Subcommands:
   (default)    List notes and notebooks. This is an alias for `nb ls`.
                When a <url> is provided, create a new bookmark.
-  add          Add a note, folder, or a file of a specified type.
+  add          Add a note, folder, or file.
   bookmark     Add, open, list, and search bookmarks.
   browse       Browse and view linked items in the terminal web browser.
   completions  Install and uninstall completion scripts.
@@ -4176,7 +4252,7 @@ Options:
 
 Description:
   Browse and view linked notes, bookmarks, notebooks, folders, and other
-  items using the terminal or GUI web brower.
+  items using the terminal or GUI web browser.
 
   `browse` includes an embedded, terminal-first web application that
   renders [[wiki-style links]] and #tags as internal links, enabling you
@@ -4920,8 +4996,7 @@ Description:
   Multiple query arguments are treated as AND queries, returning items that
   match all queries. AND queries can also be specified with the --and <query>
   option. The --or <query> option can be used to specify an OR query,
-  returning items that match at least one of the queries. --or and --and
-  queries can be used together to create complex queries.
+  returning items that match at least one of the queries.
 
   `nb search` is powered by Git's built-in `git grep` tool. `nb` also
   supports performing searches with alternative search tools using the
@@ -5258,14 +5333,15 @@ Example:
 
 ```text
 Usage:
-  nb show (<id> | <filename> | <path> | <title>) [[-a | --added] |
-          --filename | --id | --info-line | --path | [-p | --print]
-          [-r | --render] | --title | --type [<type>] | [-u | --updated]]
-          [--no-color]
+  nb show [<notebook>:](<id> | <filename> | <path> | <title>)
+          [[-a | --added] | [-b | --browse] | --filename | --id | --info-line |
+          --path | [-p | --print] [-r | --render] | --title | --type [<type>] |
+          [-u | --updated]] [--no-color]
   nb show <notebook>
 
 Options:
   -a, --added      Print the date and time when the item was added.
+  -b, --browse     Open the item with `nb browse`.
   --filename       Print the filename of the item.
   --id             Print the id number of the item.
   --info-line      Print the id, filename, and title of the item.
