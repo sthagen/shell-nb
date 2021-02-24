@@ -1086,6 +1086,11 @@ _BT=$'`'
 # The terminal width in number of columns (characters).
 _COLUMNS="$(tput cols)"
 
+# $_FILE_TYPES
+#
+# An array of supported aggregate file types.
+_FILE_TYPES=(archive audio bookmark document folder image text video)
+
 # $_NBSP
 #
 # Unicode non-breaking space.
@@ -1096,10 +1101,11 @@ _NBSP=" "
 # Assign newline with ANSI-C quoting for string building.
 _NEWLINE=$'\n'
 
-# $_FILE_TYPES
+# $_SLASH
 #
-# An array of supported aggregate file types.
-_FILE_TYPES=(archive audio bookmark document folder image text video)
+# Assign slash with ANSI-C quoting for string building support for macOS Bash
+# string substitution.
+_SLASH=$'/'
 
 # _alias_subcommand()
 #
@@ -8075,8 +8081,6 @@ _get_uri() {
 
   # Usage: _get_uri_encode <string>
   _get_uri_encode() {
-    local _slash=$'/' # macOS bash support
-
     local _encoding="${1//'%'/%25}"
     _encoding="${_encoding//' '/%20}"
     _encoding="${_encoding//'"'/%22}"
@@ -8085,7 +8089,7 @@ _get_uri() {
     _encoding="${_encoding//'&'/%26}"
     _encoding="${_encoding//'+'/%2B}"
     _encoding="${_encoding//','/%2C}"
-    _encoding="${_encoding//${_slash}/%2F}"
+    _encoding="${_encoding//${_SLASH}/%2F}"
     _encoding="${_encoding//':'/%3A}"
     _encoding="${_encoding//';'/%3B}"
     _encoding="${_encoding//'='/%3D}"
@@ -8185,30 +8189,44 @@ _option_get_tags() {
 # Description:
 #   An internal interface for pandoc. https://pandoc.org/
 _pandoc() {
+  local _from=
   local _pandoc_arguments=("--highlight-style=zenburn")
   local _render_to_html=0
   local _source_path=
 
-  local __arg=
-  for   __arg in "${@:-}"
+  while ((${#}))
   do
-    case "${__arg:-}" in
-      "")         :                   ;;
-      --render*)  _render_to_html=1   ;;
-      *)
+    case "${1:-}" in
+      "")
+        :
+        ;;
+      --from)
+        _from="${2:?}"
+        shift
+        ;;
+      --render*)
+        _render_to_html=1
+        ;;
+      [^-]*)
         if [[ -z "${_source_path:-}"  ]]
         then
-          _source_path="${__arg:-}"
+          _source_path="${1:-}"
         else
-          _pandoc_arguments+=("${__arg:-}")
+          _pandoc_arguments+=("${1:-}")
         fi
         ;;
+      *)
+        _pandoc_arguments+=("${1:-}")
+        ;;
     esac
+
+    shift
   done
 
   if ! ((_render_to_html))
   then
-    _pandoc_arguments+=("${_source_path:-}")
+    [[ -n "${_source_path:-}" ]] && _pandoc_arguments+=("${_source_path:-}")
+    [[ -n "${_from:-}"        ]] && _pandoc_arguments+=("--from=${_from:-}")
 
     pandoc "${_pandoc_arguments[@]:-}"
     return 0
@@ -8352,27 +8370,37 @@ HEREDOC
 
   if [[ -n "${_source_path:-}" ]]
   then
-    local _code_extensions=()
-
-    _code_extensions+=(
-      $(pandoc --list-highlight-languages | sed -e "/latex/d" -e "/markdown/d")
+    local _code_extensions=(
       bib hs haml js jsx py rb rs sass scss sh vim yml
     )
 
-    if _contains "${_source_path##*\.}" "${_code_extensions[@]:-}"
+    _code_extensions+=($(
+      pandoc --list-highlight-languages \
+        | sed -e "/html/d" -e "/latex/d" -e "/markdown/d"
+    ))
+
+    local _source_extension="${_source_path##*\.}"
+
+    if _contains "${_source_extension}" "${_code_extensions[@]:-}"
     then
       local _code_block_temp_path=
       _code_block_temp_path="$(_temp file ".md" --touch)"
 
       printf "${_BT}${_BT}${_BT}%s\\n%s\\n${_BT}${_BT}${_BT}\\n"  \
-        "${_source_path##*\.}"                                    \
+        "${_source_extension}"                                    \
         "$(cat "${_source_path:-}")" >> "${_code_block_temp_path:-}"
 
       _pandoc_arguments+=("${_code_block_temp_path:-}")
     else
       _pandoc_arguments+=("${_source_path:-}")
     fi
-  else
+  fi
+
+  if [[ -n "${_from:-}"           ]]
+  then
+    _pandoc_arguments+=("--from=${_from:-}")
+  elif [[ -z "${_source_path:-}"  ]]
+  then
     _pandoc_arguments+=("--from=markdown+raw_html")
   fi
 
@@ -8398,13 +8426,14 @@ HEREDOC
 # _resolve_links()
 #
 # Usage:
-#   _resolve_links <path> <notebook-path> [--browse]
+#   <input> | _resolve_links <notebook-path> [--browse] [--per-page <limit>]
+#                            [--terminal] [--type <type>]
 #
 # Options:
 #   --browse  Link to web server, link #tags, and redirect outbound links.
 #
 # Description:
-#   Read the file at <path>, resolve all [[wiki-style links]] and wrap each
+#   Read standard input, resolve all [[wiki-style links]] and wrap each
 #   one in a link to the target item, then print the updated file contents.
 #   When the --browse option is specified, #tags are linked to the search
 #   page for each tag and outbound links are updated to redirect through the
@@ -8414,109 +8443,43 @@ HEREDOC
 #   local filesystem. With --browse, links are created with http:// URLs
 #   for the internal web server.
 _resolve_links() {
-  # Usage: _resolve_links_escape_link_component <string>
-  _resolve_links_escape_link_component() {
-    printf "%s\\n" "${1:-}" \
-      | sed                 \
-        -e 's/\//\\\//g'    \
-        -e 's/\[/\\\[/g'    \
-        -e 's/\]/\\\]/g'    \
-        -e 's/(/\\(/g'      \
-        -e 's/)/\\)/g'
-  }
-
-  # Usage: <input> | _resolve_links_get_matches <pattern>
+  # Usage: <input> | _resolve_links_get_matches <pattern> [<path>]
   _resolve_links_get_matches() {
-    local _pattern="${1:?}"
+    local _arguments=()
+
+    case "${1:-}" in
+      '') return 1 ;;
+      *)
+        _arguments+=("-e" "${1:?}")
+        [[ -n "${2:-}" ]] && _arguments+=("${2:-}")
+        ;;
+    esac
 
     if _command_exists "rg"
     then
-      rg                  \
-        --color=never     \
-        --no-filename     \
-        --only-matching   \
-        --text            \
-        -e "${_pattern}"  \
+      rg                      \
+        --color=never         \
+        --no-filename         \
+        --only-matching       \
+        --text                \
+        "${_arguments[@]:-}"  \
         2>/dev/null || :
     else
-      grep                \
-        --color=never     \
-        --extended-regexp \
-        -h                \
-        --only-matching   \
-        --text            \
-        -e "${_pattern}"
+      grep                    \
+        --color=never         \
+        --extended-regexp     \
+        -h                    \
+        --only-matching       \
+        --text                \
+        "${_arguments[@]:-}"  \
+        2>/dev/null || :
     fi
   }
 
-  # _resolve_links_replace()
-  #
-  # Usage:
-  #   _resolve_links_replace <file-path> <match>... --- <replacement>...
-  #
-  # Description:
-  #   Read file at <file-path>, replace each <match> with the corresponding
-  #   <replacement>, and print to standard output.
-  _resolve_links_replace() {
-    local _file_path="${1:?}"
-
-    shift
-
-    local _matches=()
-    local _replacements=()
-    local _separator_seen=0
-
-    while ((${#}))
-    do
-      if [[ "${1:-}" =~ ^--- ]]
-      then
-        _separator_seen=1
-      else
-        if ! ((_separator_seen))
-        then
-          _matches+=("${1:-}")
-        else
-          _replacements+=("${1:-}")
-        fi
-      fi
-
-      shift
-    done
-
-    local _sed_arguments=()
-    local _seen_matches=()
-
-    [[ "${#_matches[@]}" != "${#_replacements[@]}" ]] && return 1
-
-    local i=0
-    for ((i=0; i < "${#_replacements[@]}"; i++))
-    do
-      local _escaped_match=
-      _escaped_match="$(
-        _resolve_links_escape_link_component "${_matches[i]:-}"
-      )"
-
-      local _escaped_replacement=
-      _escaped_replacement="$(
-        _resolve_links_escape_link_component "${_replacements[i]:-}"
-      )"
-
-      if [[ -n "${_escaped_match:-}"        ]] &&
-         [[ -n "${_escaped_replacement:-}"  ]] &&
-         ! _contains "${_escaped_match}" "${_seen_matches[@]:-}"
-      then
-        _sed_arguments+=("-e" "s/${_escaped_match}/${_escaped_replacement}/g")
-        _seen_matches+=("${_escaped_match}")
-      fi
-    done
-
-    sed "${_sed_arguments[@]:-}" "${_file_path}"
-  }
-
-  local _file_path=
   local _for_browsing=0
   local _per_page=
   local _terminal=0
+  local _input_type="html"
 
   while ((${#}))
   do
@@ -8525,11 +8488,9 @@ _resolve_links() {
       --per-page) _per_page="${2:?}"                && shift  ;;
       --page)     _option_value_is_present "${2:-}" && shift  ;;
       --terminal) _terminal=1                                 ;;
+      --type)     _input_type="${2:?}"              && shift  ;;
       *)
-        if [[   -z "${_file_path:-}"      ]]
-        then
-          _file_path="${1:-}"
-        elif [[ -z "${_notebook_path:-}"  ]]
+        if [[ -z "${_notebook_path:-}"  ]]
         then
           _notebook_path="${1:-}"
         fi
@@ -8539,10 +8500,7 @@ _resolve_links() {
     shift
   done
 
-  [[ ! -f "${_file_path:-}"     ]] && return 1
   [[ ! -d "${_notebook_path:-}" ]] && return 1
-
-  cd "${_file_path%/*}"
 
   local _query_string=
 
@@ -8551,98 +8509,13 @@ _resolve_links() {
     _query_string="?--per-page=${_per_page:-}"
   fi
 
+  local _input_temp_file_path=
+  _input_temp_file_path="$(_temp file ".${_input_type}" --touch)"
+
+  cat >> "${_input_temp_file_path}"
+
   {
-    # resolve and link [[wiki-style links]]
-
-    {
-      _resolve_links_get_matches  "\[\[[^\[]+\]\]" < "${_file_path}"
-    } | {
-      local _links=()
-      local _matches=()
-
-      local __match=
-      while read -r __match
-      do
-        [[ -z "${__match:-}" ]] && continue
-
-        _matches+=("${__match}")
-
-        local _selector="${__match#[[}"
-        _selector="${_selector%]]}"
-
-        if ((_for_browsing))
-        then
-          if [[ -z "${_selector:-}" ]]
-          then
-            _links+=("${__match}")
-          else
-            local _notebook_name=
-            local _query_selector=
-
-            if [[ "${_selector:-}" =~ : ]] && [[ ! "${_selector:-}" =~ :// ]]
-            then
-              _notebook_name="${_selector%%:*}"
-              _query_selector="${_selector}"
-            else
-              _notebook_name="${_notebook_path##*/}"
-              _query_selector="${_notebook_name}:${_selector}"
-            fi
-
-            local _selector_path=
-            _selector_path="$(_selector_resolve_path "${_query_selector:-}")"
-
-            local _id_selector=
-            _id_selector="$(
-              _get_id_selector "${_notebook_name}:${_selector_path}" 2>/dev/null || :
-            )"
-
-            if [[ -n "${_selector#*:}" ]] && [[ -z "${_selector_path:-}" ]]
-            then
-              _links+=("[[${_selector:-}]]")
-            else
-              local _target_url="http://localhost:${NB_SERVER_PORT}/${_id_selector:-}${_query_string:-}"
-
-              case "${_file_path:-}" in
-                *\.html)
-                  _links+=("<a href=\"${_target_url:-}\">[[${_selector:-}]]</a>"
-                  )
-                  ;;
-                *\.org)
-                  _links+=("[[${_target_url:-}][[[${_selector:-}]]]]")
-                  ;;
-                *)
-                  _links+=("[[${_selector:-}]]")
-                  ;;
-              esac
-            fi
-          fi
-        else
-          local _link_path=
-          _link_path="$(_show "${_selector}" --path 2>/dev/null || :)"
-
-          if [[ -z "${_link_path:-}" ]]
-          then
-            _links+=("[[${_selector}]]")
-          else
-            case "${_file_path:-}" in
-              *\.html)
-                _links+=("<a href=\"file://${_link_path:-}\">[[${_selector:-}]]</a>")
-                ;;
-              *\.org)
-                _links+=("[[file://${_link_path:-}][[[${_selector:-}]]]]")
-                ;;
-              *)
-                _links+=("[[${_selector:-}]]")
-                ;;
-            esac
-          fi
-        fi
-      done
-
-      _resolve_links_replace  \
-        "${_file_path}"       \
-        "${_matches[@]:-}" --- "${_links[@]:-}"
-    }
+    cat "${_input_temp_file_path}"
   } | {
     # link #hashtags to internal search URLs
 
@@ -8653,21 +8526,21 @@ _resolve_links() {
       local _replacement_url="http:\/\/localhost:${NB_SERVER_PORT}\/${_notebook_path##*/}:"
 
       case "${_query_string:-}" in
-        '') _replacement_url+="?--query=%23\\2"                             ;;
-        *)  _replacement_url+="${_query_string}\&--query=%23\\2"            ;;
+        '') _replacement_url+="?--query=%23\\2"                         ;;
+        *)  _replacement_url+="${_query_string}\&--query=%23\\2"        ;;
       esac
 
       local _pattern=
 
-      case "${_file_path:-}" in
-        *\.html)  _pattern="<a\ href=\"${_replacement_url:-}\">\#\\2<\/a>"  ;;
-        *\.org)   _pattern="[[${_replacement_url:-}][\#\\2]]"               ;;
-        *)        _pattern="\#\\2"                                          ;;
+      case "${_input_type:-}" in
+        html) _pattern="<a\ href=\"${_replacement_url:-}\">\#\\2<\/a>"  ;;
+        org)  _pattern="[[${_replacement_url:-}][\#\\2]]"               ;;
+        *)    _pattern="\#\\2"                                          ;;
       esac
 
-      if [[ "${_file_path:-}" =~ \.html ]]
+      if [[ "${_input_type:-}" == "html" ]]
       then
-        if grep -q "<\/body>" "${_file_path:-}"
+        if grep -q "<\/body>" "${_input_temp_file_path}"
         then
           sed -E -e "/<body>/,/<\/body>/ s/([>|\ ])\#([A-Za-z0-9_\-]+)/\1${_pattern}/g"
         else
@@ -8678,75 +8551,200 @@ _resolve_links() {
       fi
     fi
   } | {
+    # resolve and link [[wiki-style links]]
+
+    local __match=
+    for   __match in  $(_resolve_links_get_matches  \
+                        "\[\[[^\[]+\]\]"            \
+                        "${_input_temp_file_path}")
+    do
+      local _link=
+
+      [[ -z "${__match:-}" ]] && continue
+
+      local _selector="${__match#[[}"
+      _selector="${_selector%]]}"
+
+      if ((_for_browsing))
+      then
+        if [[ -z "${_selector:-}" ]]
+        then
+          _link="${__match}"
+        else
+          local _notebook_name=
+          local _query_selector=
+
+          if [[ "${_selector:-}" =~ : ]] && [[ ! "${_selector:-}" =~ :// ]]
+          then
+            _notebook_name="${_selector%%:*}"
+            _query_selector="${_selector}"
+          else
+            _notebook_name="${_notebook_path##*/}"
+            _query_selector="${_notebook_name}:${_selector}"
+          fi
+
+          local _selector_path=
+          _selector_path="$(_selector_resolve_path "${_query_selector:-}")"
+
+          local _id_selector=
+          _id_selector="$(
+            _get_id_selector "${_notebook_name}:${_selector_path}" 2>/dev/null || :
+          )"
+
+          if [[ -n "${_selector#*:}" ]] && [[ -z "${_selector_path:-}" ]]
+          then
+            _link="[[${_selector:-}]]"
+          else
+            local _target_url="http://localhost:${NB_SERVER_PORT}/${_id_selector:-}${_query_string:-}"
+
+            case "${_input_type:-}" in
+              html)
+                _link="<a href=\"${_target_url:-}\">[[${_selector:-}]]</a>"
+                ;;
+              org)
+                _link="[[${_target_url:-}][[[${_selector:-}]]]]"
+                ;;
+              *)
+                _link="[[${_selector:-}]]"
+                ;;
+            esac
+          fi
+        fi
+      else
+        local _link_path=
+        _link_path="$(_show "${_selector}" --path 2>/dev/null || :)"
+
+        if [[ -z "${_link_path:-}" ]]
+        then
+          _link="[[${_selector}]]"
+        else
+          case "${_input_type:-}" in
+            html)
+              _link="<a href=\"file://${_link_path:-}\">[[${_selector:-}]]</a>"
+              ;;
+            org)
+              _link="[[file://${_link_path:-}][[[${_selector:-}]]]]"
+              ;;
+            *)
+              _link="[[${_selector:-}]]"
+              ;;
+          esac
+        fi
+      fi
+
+      local _escaped_match="${__match//${_SLASH}/\\/}"
+      _escaped_match="${_escaped_match//\[/\\[}"
+      _escaped_match="${_escaped_match//\]/\\]}"
+      _escaped_match="${_escaped_match//\(/\(}"
+      _escaped_match="${_escaped_match//\)/\)}"
+
+      local _escaped_replacement="${_link//${_SLASH}/\\/}"
+      _escaped_replacement="${_escaped_replacement//\[/\\[}"
+      _escaped_replacement="${_escaped_replacement//\]/\\]}"
+      _escaped_replacement="${_escaped_replacement//\(/\(}"
+      _escaped_replacement="${_escaped_replacement//\)/\)}"
+
+      if [[ -n "${_escaped_match:-}"        ]] &&
+         [[ -n "${_escaped_replacement:-}"  ]] &&
+         ! _contains "${_escaped_match}" "${_seen_matches[@]:-}"
+      then
+        _sed_arguments+=("-e" "s/${_escaped_match}/${_escaped_replacement}/g")
+        _seen_matches+=("${_escaped_match}")
+      fi
+    done
+
+    sed "${_sed_arguments[@]:-}"
+  } | {
     # rewrite outbound links to use an exit page
 
     if ! ((_for_browsing))
     then
       cat
     else
-      local _file_extension="${_file_path##*\.}"
-
-      local _temp_file_path=
-      _temp_file_path="$(_temp file ".${_file_extension:-}" --touch)"
-
-      cat >> "${_temp_file_path}"
-
       local _outbound_url_pattern=
 
-      case "${_file_extension:-}" in
+      case "${_input_type:-}" in
         org)  _outbound_url_pattern="\[\[https?://[^]]+"      ;;
         html) _outbound_url_pattern="href=\"https?://[^\"]+"  ;;
       esac
 
-      {
-        _resolve_links_get_matches  \
-          "${_outbound_url_pattern:-}" < "${_temp_file_path}"
-      } | {
-        local _matches=()
-        local _replacements=()
+      local _sed_arguments=()
+      local _seen_matches=()
 
-        local __match=
-        while read -r __match
-        do
-          [[ -z "${__match:-}" ]] && continue
+      local __match=
+      for   __match in  $(_resolve_links_get_matches    \
+                          "${_outbound_url_pattern:-}"  \
+                          "${_input_temp_file_path}")
+      do
+        [[ -z "${__match:-}" ]] && continue
 
-          if [[ "${__match}" =~ https?://localhost ]]
-          then
-            continue
-          fi
+        if [[ "${__match}" =~ https?://localhost ]]
+        then
+          continue
+        fi
 
-          _matches+=("${__match}")
+        case "${_input_type:-}" in
+          org)  local _target_url="${__match#\[\[}"     ;;
+          html) local _target_url="${__match#href=\"}"  ;;
+        esac
 
-          case "${_file_extension:-}" in
-            org)  local _target_url="${__match#\[\[}"     ;;
-            html) local _target_url="${__match#href=\"}"  ;;
-          esac
+        # NOTE: skip _get_uri() for performance
+        # use ${_SLASH} for macOS bash support
 
-          local _encoded_url=
-          _encoded_url="$(_get_uri --encode "${_target_url}")"
+        local _encoding="${_target_url//'%'/%25}"
+        _encoding="${_encoding//' '/%20}"
+        _encoding="${_encoding//'"'/%22}"
+        _encoding="${_encoding//'#'/%23}"
+        _encoding="${_encoding//'$'/%24}"
+        _encoding="${_encoding//'&'/%26}"
+        _encoding="${_encoding//'+'/%2B}"
+        _encoding="${_encoding//','/%2C}"
+        _encoding="${_encoding//${_SLASH}/%2F}"
+        _encoding="${_encoding//':'/%3A}"
+        _encoding="${_encoding//';'/%3B}"
+        _encoding="${_encoding//'='/%3D}"
+        _encoding="${_encoding//'?'/%3F}"
+        _encoding="${_encoding//'@'/%40}"
+        _encoding="${_encoding//'['/%5B}"
+        local _encoded_url="${_encoding//']'/%5D}"
 
-          local _replacement_url="http://localhost:${NB_SERVER_PORT}?url=${_encoded_url}"
-          local _replacement="${_replacement_url}"
+        local _replacement_url="http://localhost:${NB_SERVER_PORT}?url=${_encoded_url}"
+        local _replacement="${_replacement_url}"
 
-          case "${_file_extension:-}" in
-            org)
-              if [[ "${__match:-}" =~ ^\[\[ ]]
-              then
-                _replacement="[[${_replacement}"
-              fi
-              ;;
-            html)
-              _replacement="href=\"${_replacement}"
-              ;;
-          esac
+        case "${_input_type:-}" in
+          org)
+            if [[ "${__match:-}" =~ ^\[\[ ]]
+            then
+              _replacement="[[${_replacement}"
+            fi
+            ;;
+          html)
+            _replacement="href=\"${_replacement}"
+            ;;
+        esac
 
-          _replacements+=("${_replacement:-}")
-        done
+        local _escaped_match="${__match//${_SLASH}/\\/}"
+        _escaped_match="${_escaped_match//\[/\\[}"
+        _escaped_match="${_escaped_match//\]/\\]}"
+        _escaped_match="${_escaped_match//\(/\(}"
+        _escaped_match="${_escaped_match//\)/\)}"
 
-        _resolve_links_replace  \
-          "${_temp_file_path}"  \
-          "${_matches[@]:-}" --- "${_replacements[@]:-}"
-      }
+        local _escaped_replacement="${_replacement//${_SLASH}/\\/}"
+        _escaped_replacement="${_escaped_replacement//\[/\\[}"
+        _escaped_replacement="${_escaped_replacement//\]/\\]}"
+        _escaped_replacement="${_escaped_replacement//\(/\(}"
+        _escaped_replacement="${_escaped_replacement//\)/\)}"
+
+        if [[ -n "${_escaped_match:-}"        ]] &&
+           [[ -n "${_escaped_replacement:-}"  ]] &&
+           ! _contains "${_escaped_match}" "${_seen_matches[@]:-}"
+        then
+          _sed_arguments+=("-e" "s/${_escaped_match}/${_escaped_replacement}/g")
+          _seen_matches+=("${_escaped_match}")
+        fi
+      done
+
+      sed "${_sed_arguments[@]:-}"
     fi
   }
 }
@@ -13848,34 +13846,33 @@ Can't show archives. Export archive and expand to edit.\\n"
       _rendered_temp_file_path="$(_temp file ".html" --touch)"
 
       if [[ "${_target_path}" =~ \.org ]]
-      then # resolve  org mode [[wiki-style links]] before rendering to HTML
-        local _linked_temp_file_path=
-        _linked_temp_file_path="$(_temp file ".org" --touch)"
-
-        # NOTE: avoid pandoc bug with brackets in org link descriptions
-        _resolve_links                          \
-          "${_target_path}" "${_notebook_path}" \
-          | sed -E                              \
-            -e "s/\]\[\[\[/\]\[••/g"            \
-            -e "s/\]\]\]\]/••\]\]/g"            \
-              >> "${_linked_temp_file_path}"
-
-        _pandoc "${_linked_temp_file_path}"     \
-          --render-to-html                      \
-          | sed -E                              \
-            -e "s/>••/>\[\[/g"                  \
-            -e "s/••</\]\]</g"                  \
-              >> "${_rendered_temp_file_path}"
-      else # render to HTML before resolving [[wiki-style links]]
-        local _unlinked_temp_file_path=
-        _unlinked_temp_file_path="$(_temp file ".html" --touch)"
-
-        _pandoc "${_target_path}"               \
-          --render-to-html >> "${_unlinked_temp_file_path}"
-
-        _resolve_links                          \
-          "${_unlinked_temp_file_path}"         \
-          "${_notebook_path}" >> "${_rendered_temp_file_path}"
+      then # resolve Org [[wiki-style links]] before rendering to HTML
+        {
+          cat "${_target_path}"
+        } | {
+          _resolve_links "${_notebook_path}" --type org
+        } | {
+          # avoid pandoc bug with brackets in Org link descriptions
+          sed -E                      \
+            -e "s/\]\[\[\[/\]\[••/g"  \
+            -e "s/\]\]\]\]/••\]\]/g"  \
+          | _pandoc                   \
+            --from org                \
+            --render-to-html          \
+          | sed -E                    \
+            -e "s/>••/>\[\[/g"        \
+            -e "s/••</\]\]</g"
+        } | {
+         cat >> "${_rendered_temp_file_path}"
+        }
+      else # render non-Org to HTML before resolving [[wiki-style links]]
+        {
+          _pandoc "${_target_path}" --render-to-html
+        } | {
+          _resolve_links "${_notebook_path}"
+        } | {
+          cat >> "${_rendered_temp_file_path}"
+        }
       fi
 
       if ((_print_output))
@@ -14208,21 +14205,24 @@ _browse() {
 
         local _display_item="${__list_item:-}"
 
-        _display_item="$(
-          printf "%s\\n" "${_display_item}" \
-            | sed                           \
-              -e 's/\&/\&amp;/g'            \
-              -e 's/#/\&#35;/g'             \
-              -e 's/\$/\&#36;/g'            \
-              -e 's/(/\&#40;/g'             \
-              -e 's/)/\&#41;/g'             \
-              -e 's/</\&#60;/g'             \
-              -e 's/>/\&#62;/g'             \
-              -e 's/@/\&#64;/g'             \
-              -e 's/\\\ / /g'               \
-              -e 's/\ / /g'                 \
-              -e 's/\$/\&#36;/g'
-        )"
+        local _35="&#35;"
+        local _36="&#36;"
+        local _40="&#40;"
+        local _41="&#41;"
+        local _60="&#60;"
+        local _62="&#62;"
+        local _64="&#64;"
+
+        _display_item="${_display_item//'&'/&amp;}"
+        _display_item="${_display_item//'#'/${_35}}"
+        _display_item="${_display_item//'$'/${_36}}"
+        _display_item="${_display_item//'('/${_40}}"
+        _display_item="${_display_item//')'/${_41}}"
+        _display_item="${_display_item//'<'/${_60}}"
+        _display_item="${_display_item//'>'/${_62}}"
+        _display_item="${_display_item//'@'/${_64}}"
+        _display_item="${_display_item//\\\ /${_NBSP}}"
+        _display_item="${_display_item//' '/${_NBSP}}"
 
         # shellcheck disable=SC2140
         _display_item="${_display_item/\[/<span class="dim">[</span><span class="identifier">}"
@@ -14343,7 +14343,7 @@ HEREDOC
         printf "</p>\\n"
       fi
     } | {
-      _pandoc --from=html+raw_html --render-to-html
+      _pandoc --from html+raw_html --render-to-html
     }
   }
 
@@ -14490,6 +14490,58 @@ HEREDOC
     printf "<h1 class=\"header-crumbs\">%s</h1>\\n\\n" "${_header_content:-}"
   }
 
+  # _browse_render_edit()
+  #
+  # Usage:
+  #   _browse_render_edit <path> [--per-page] [--terminal]
+  #
+  # Description:
+  #   Print an HTML page for editing a text file.
+  _browse_render_edit() {
+    local _header_arguments=()
+    local _pagination_arguments=()
+    local _per_page="${NB_BROWSE_PER_PAGE:-30}"
+    local _source_path=
+
+    while ((${#}))
+    do
+      case "${1:-}" in
+        --page)
+          _option_value_is_present "${2:-}" && shift
+          ;;
+        --per-page)
+          _per_page="${2:?}"
+          _pagination_arguments+=("${1:?}" "${2:?}")
+          _header_arguments+=("${1:?}" "${2:?}")
+          shift
+          ;;
+        --terminal)
+          _pagination_arguments+=("--terminal")
+          _header_arguments+=("--terminal")
+          ;;
+        *)
+          _source_path="${1:-}"
+          _header_arguments+=("${_source_path}")
+          ;;
+      esac
+
+      shift
+    done
+
+    local _url_params=
+
+    if _contains "--terminal" "${_pagination_arguments[@]:-}"
+    then
+      _url_params+="?--per-page=${_per_page}"
+    fi
+
+    {
+      printf "%s\\n" "$(_browse_render_header "${_pagination_arguments[@]:-}")"
+    } | {
+      _pandoc --render-to-html || :
+    }
+  }
+
   # _browse_render_item()
   #
   # Usage:
@@ -14500,7 +14552,7 @@ HEREDOC
   _browse_render_item() {
     local _header_arguments=()
     local _pagination_arguments=()
-    local _selector=
+    local _source_path=
 
     while ((${#}))
     do
@@ -14518,8 +14570,8 @@ HEREDOC
           _header_arguments+=("--terminal")
           ;;
         *)
-          _selector="${1:-}"
-          _header_arguments+=("${_selector}")
+          _source_path="${1:-}"
+          _header_arguments+=("${_source_path}")
           ;;
       esac
 
@@ -14534,46 +14586,44 @@ HEREDOC
 
     local _notebook_path=
     _notebook_path="$(
-      _notebooks show "${_selector:-}" --path 2>/dev/null ||
+      _notebooks show "${_source_path:-}" --path 2>/dev/null ||
         _notebooks current --path
     )"
 
-    local _source_path=
-    _source_path="$(_show "${_selector:-}" --path)"
-
     if [[ "${_source_path:-}" =~ \.org$ ]]
-    then # resolve org mode [[wiki-style links]] before rendering to HTML
-      local _linked_temp_file_path=
-      _linked_temp_file_path="$(_temp file ".org" --touch)"
-
-      # NOTE: avoid pandoc bug with brackets in org link descriptions
-      _resolve_links "${_source_path}"                      \
-        "${_notebook_path}"                                 \
-        "${_pagination_arguments[@]:-}"                     \
-        --browse                                            \
-        | sed -E                                            \
-          -e "s/\]\[\[\[/\]\[••/g"                          \
-          -e "s/\]\]\]\]/••\]\]/g"                          \
-            >> "${_linked_temp_file_path}"
-
-      _pandoc "${_linked_temp_file_path}"                   \
-        --include-before-body="${_header_temp_path}"        \
-        --render-to-html                                    \
-        | sed -E                                            \
-          -e "s/>••/>\[\[/g"                                \
+    then # resolve Org [[wiki-style links]] before rendering to HTML
+      {
+        cat "${_source_path}"
+      } | {
+        _resolve_links                                  \
+          "${_notebook_path}"                           \
+          "${_pagination_arguments[@]:-}"               \
+          --browse                                      \
+          --type org
+      } | {
+        # avoid pandoc bug with brackets in Org link descriptions
+        sed -E                                          \
+          -e "s/\]\[\[\[/\]\[••/g"                      \
+          -e "s/\]\]\]\]/••\]\]/g"                      \
+        | _pandoc                                       \
+          --include-before-body="${_header_temp_path}"  \
+          --from org                                    \
+          --render-to-html                              \
+        | sed -E                                        \
+          -e "s/>••/>\[\[/g"                            \
           -e "s/••</\]\]</g"
-    else # render before resolving [[wiki-style links]]
-      local _unlinked_temp_file_path=
-      _unlinked_temp_file_path="$(_temp file ".html" --touch)"
-
-      _pandoc "${_source_path}"                             \
-        --include-before-body="${_header_temp_path}"        \
-        --render-to-html >> "${_unlinked_temp_file_path}"
-
-      _resolve_links "${_unlinked_temp_file_path}"          \
-        "${_notebook_path}"                                 \
-        "${_pagination_arguments[@]:-}"                     \
-        --browse
+      }
+    else # render non-Org to HTML before resolving [[wiki-style links]]
+      {
+        _pandoc "${_source_path}"                       \
+          --include-before-body="${_header_temp_path}"  \
+          --render-to-html
+      } | {
+        _resolve_links                                  \
+          "${_notebook_path}"                           \
+          "${_pagination_arguments[@]:-}"               \
+          --browse
+      }
     fi
 
     return 0
@@ -14810,10 +14860,10 @@ HEREDOC
 
       # turn on case-insensitive matching
       shopt -s nocasematch
-      if [[ "${_http_header_line}"      =~ User-Agent     ]]
+      if [[ "${_http_header_line}"      =~ User-Agent           ]]
       then
 
-        if [[ ! "${_http_header_line}"  =~ Lynx|w3m|Links ]]
+        if [[ ! "${_http_header_line}"  =~ curl|Links|Lynx|w3m  ]]
         then
           _terminal_browser=0
           _looking_for_user_agent=0
@@ -14863,7 +14913,10 @@ HEREDOC
     if [[ "${_request_uri}" =~ --query=([^&]+)      ]]
     then
       local _hash=$'#'
-      _query="${BASH_REMATCH[1]//%23/${_hash}}"
+      _query="${BASH_REMATCH[1]}"
+      _query="${_query//%23/${_hash}}"
+      _query="${_query//%20/ }"
+      _query="${_query//+/ }"
     fi
 
     # prepare response
@@ -14981,7 +15034,7 @@ HEREDOC
 
     _temp pid "${_pid}"
 
-    sleep 0.5
+    sleep 0.05
   }
 
   local _browse_notebooks=0
