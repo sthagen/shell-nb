@@ -3423,8 +3423,8 @@ $(_color_primary "Usage:")
   ${_ME} bookmark (edit | delete) (<id> | <filename> | <path> | <title>)
   ${_ME} bookmark search <query>
   ${_ME} browse [<notebook>:][<id> | <filename> | <title> | <path>]
-            [-g | --gui] [--notebooks] [--print] [-q | --query <query>]
-            [-s | --serve]
+            [-e | --edit] [-g | --gui] [--notebooks] [--print]
+            [-q | --query <query>] [-s | --serve]
   ${_ME} completions (check | install [-d | --download] | uninstall)
   ${_ME} count [<notebook>:][<relative-path>]
   ${_ME} delete [<notebook>:](<id> | <filename> | <path> | <title>)...
@@ -3513,7 +3513,7 @@ $(_color_primary "Subcommands:")
                When a <url> is provided, create a new bookmark.
   add          Add a note, folder, or file.
   bookmark     Add, open, list, and search bookmarks.
-  browse       Browse and view linked items in the terminal web browser.
+  browse       Browse, view, and edit linked items in terminal and GUI browsers.
   completions  Install and uninstall completion scripts.
   count        Print the number of items in a notebook or folder.
   delete       Delete a note.
@@ -8353,6 +8353,35 @@ label[for=search-input] {
   to    { opacity: 0; }
 }
 
+input[type="submit"] {
+  background:       none;
+  border:           none;
+  color:            #6EB3D7;
+  font-size:        1.25rem;
+  outline:          0 solid #1a1a1a;
+  padding:          0;
+}
+
+input[type="submit"]:active {
+  border-bottom:    1px solid #bae7ff;
+  color:            #bae7ff;
+}
+
+input[type="submit"]:hover {
+  border-bottom:    1px solid #6EB3D7;
+}
+
+textarea {
+  background-color: #1a1a1a;
+  border:           none;
+  border-bottom:    1px dashed #626480;
+  border-top:       1px dashed #626480;
+  color:            #cccccc;
+  font-size:        1rem;
+  outline:          0 solid #1a1a1a;
+  padding:          2rem 0;
+}
+
 div.sourceCode {
   background-color: transparent;
 }
@@ -8476,6 +8505,7 @@ _resolve_links() {
     fi
   }
 
+  local _columns="${NB_BROWSE_COLUMNS:-70}"
   local _for_browsing=0
   local _per_page=
   local _terminal=0
@@ -8484,6 +8514,7 @@ _resolve_links() {
   while ((${#}))
   do
     case "${1:-}" in
+      --col*)     _columns="${2:?}"                 && shift  ;;
       --browse)   _for_browsing=1                             ;;
       --per-page) _per_page="${2:?}"                && shift  ;;
       --page)     _option_value_is_present "${2:-}" && shift  ;;
@@ -8502,11 +8533,11 @@ _resolve_links() {
 
   [[ ! -d "${_notebook_path:-}" ]] && return 1
 
-  local _query_string=
+  local _url_params_pattern=
 
-  if ((_terminal)) && [[ -n "${_per_page:-}" ]]
+  if ((_terminal))
   then
-    _query_string="?--per-page=${_per_page:-}"
+    _url_params_pattern="?--per-page=${_per_page:-}\&--columns=${_columns:-}"
   fi
 
   local _input_temp_file_path=
@@ -8525,9 +8556,9 @@ _resolve_links() {
     else
       local _replacement_url="http:\/\/localhost:${NB_SERVER_PORT}\/${_notebook_path##*/}:"
 
-      case "${_query_string:-}" in
+      case "${_url_params_pattern:-}" in
         '') _replacement_url+="?--query=%23\\2"                         ;;
-        *)  _replacement_url+="${_query_string}\&--query=%23\\2"        ;;
+        *)  _replacement_url+="${_url_params_pattern}\&--query=%23\\2"  ;;
       esac
 
       local _pattern=
@@ -8595,7 +8626,7 @@ _resolve_links() {
           then
             _link="[[${_selector:-}]]"
           else
-            local _target_url="http://localhost:${NB_SERVER_PORT}/${_id_selector:-}${_query_string:-}"
+            local _target_url="http://localhost:${NB_SERVER_PORT}/${_id_selector:-}${_url_params_pattern:-}"
 
             case "${_input_type:-}" in
               html)
@@ -13853,17 +13884,17 @@ Can't show archives. Export archive and expand to edit.\\n"
           _resolve_links "${_notebook_path}" --type org
         } | {
           # avoid pandoc bug with brackets in Org link descriptions
-          sed -E                      \
-            -e "s/\]\[\[\[/\]\[••/g"  \
-            -e "s/\]\]\]\]/••\]\]/g"  \
-          | _pandoc                   \
-            --from org                \
-            --render-to-html          \
-          | sed -E                    \
-            -e "s/>••/>\[\[/g"        \
-            -e "s/••</\]\]</g"
+          sed -E                            \
+              -e "s/\]\[\[\[/\]\[••/g"      \
+              -e "s/\]\]\]\]/••\]\]/g"      \
+              | _pandoc                     \
+                  --from org                \
+                  --render-to-html          \
+                  | sed -E                  \
+                        -e "s/>••/>\[\[/g"  \
+                        -e "s/••</\]\]</g"
         } | {
-         cat >> "${_rendered_temp_file_path}"
+          cat >> "${_rendered_temp_file_path}"
         }
       else # render non-Org to HTML before resolving [[wiki-style links]]
         {
@@ -14016,10 +14047,11 @@ _call_deferred_command --group 2
 describe "browse" <<HEREDOC
 Usage:
   ${_ME} browse [<notebook>:][<id> | <filename> | <title> | <path>]
-            [-g | --gui] [--notebooks] [--print] [-q | --query <query>]
-            [-s | --serve]
+            [-e | --edit] [-g | --gui] [--notebooks] [--print]
+            [-q | --query <query>] [-s | --serve]
 
 Options:
+  -e, --edit            Open the edit view for the item in the browser.
   -g, --gui             Open in the system's primary GUI web browser.
   --notebooks           Browse notebooks.
   --print               Print to standard output.
@@ -14027,8 +14059,8 @@ Options:
   -s, --serve           Start the web application server.
 
 Description:
-  Browse and view linked notes, bookmarks, notebooks, folders, and other
-  items using the terminal or GUI web browser.
+  Browse, view, and edit linked notes, bookmarks, notebooks, folders, and
+  other items using the terminal or GUI web browser.
 
   \`browse\` includes an embedded, terminal-first web application that
   renders [[wiki-style links]] and #tags as internal links, enabling you
@@ -14077,6 +14109,7 @@ _browse() {
 
     case "${_status_code}" in
       200) printf "OK\\n"                     ;;
+      302) printf "Found\\n"                  ;;
       307) printf "Temporary Redirect\\n"     ;;
       400) printf "Bad Request\\n"            ;;
       403) printf "Forbidden\\n"              ;;
@@ -14090,13 +14123,14 @@ _browse() {
   # _browse_render_container()
   #
   # Usage:
-  #   _browse_render_container <target-path> [--page <page-number>]
-  #                            [--per-page <number>] [--query <query>]
-  #                            [--terminal]
+  #   _browse_render_container <target-path> [--columns <columns>]
+  #                            [--page <page-number>] [--per-page <limit>]
+  #                            [--query <query>] [--terminal]
   #
   # Description:
   #   Render a notebook or folder as an HTML page.
   _browse_render_container() {
+    local _columns="${NB_BROWSE_COLUMNS:-70}"
     local _current_page=1
     local _pagination_arguments=()
     local _per_page="${NB_BROWSE_PER_PAGE:-30}"
@@ -14107,6 +14141,11 @@ _browse() {
     while ((${#}))
     do
       case "${1:-}" in
+        --col*)
+          _columns="$(_option_get_value "${1:-}" "${2:-}")"
+          _pagination_arguments+=("${1:-}" "${2:?}")
+          shift
+          ;;
         --page)
           _current_page="${2:?}"
           _pagination_arguments+=("${1:-}" "${2:?}")
@@ -14163,15 +14202,18 @@ _browse() {
       if ((_terminal_browser))
       then
         case "${BROWSER:-}" in
-          *elinks*) _truncate_length="$((_COLUMNS - 20))" ;;
-          *lynx*)   _truncate_length="$((_COLUMNS - 10))" ;;
-          *)        _truncate_length="$((_COLUMNS - 1))"  ;;
+          # TODO: improve
+          *elinks*) _truncate_length="$((_columns - 23))" ;;
+          *links*)  _truncate_length="$((_columns - 5))"  ;;
+          *)        _truncate_length="$((_columns - 1))"  ;;
         esac
+      else
+        _truncate_length="$((_columns - 1))"
       fi
 
       while read -r __list_item
       do
-        if ((_terminal_browser))
+        if [[ -n "${_truncate_length:-}" ]]
         then
           local _list_item_length="${#__list_item}"
           local _list_item_visible_length=
@@ -14233,7 +14275,7 @@ _browse() {
 
         if ((_terminal_browser))
         then
-          _url_params+="?--per-page=${_per_page}"
+          _url_params+="?--per-page=${_per_page}&--columns=${_columns}"
         fi
 
         printf "<a href=\"http://localhost:%s/%s\" class=\"list-item\">%s</a><br>\\n" \
@@ -14306,7 +14348,7 @@ HEREDOC
         printf "<p class=\"pagination\">\\n"
       fi
 
-      local _params="--per-page=${_per_page}"
+      local _params="--per-page=${_per_page}&--columns="${_columns}
 
       if [[ -n "${_query:-}" ]]
       then
@@ -14347,14 +14389,112 @@ HEREDOC
     }
   }
 
+  # _browse_render_edit()
+  #
+  # Usage:
+  #   _browse_render_edit <path> [--columns <columns>] [--per-page <limit>]
+  #                       [--terminal]
+  #
+  # Description:
+  #   Print an HTML page for editing a text file.
+  _browse_render_edit() {
+    local _columns="${NB_BROWSE_COLUMNS:-70}"
+    local _pagination_arguments=()
+    local _per_page="${NB_BROWSE_PER_PAGE:-30}"
+    local _source_path=
+
+    while ((${#}))
+    do
+      case "${1:-}" in
+        --col*)
+          _columns="$(_option_get_value "${1:-}" "${2:-}")"
+          _pagination_arguments+=("${1:?}" "${2:?}")
+          shift
+          ;;
+        --page)
+          _option_value_is_present "${2:-}" && shift
+          ;;
+        --per-page)
+          _per_page="${2:?}"
+          _pagination_arguments+=("${1:?}" "${2:?}")
+          shift
+          ;;
+        --terminal)
+          _pagination_arguments+=("--terminal")
+          ;;
+        *)
+          _source_path="${1:-}"
+          ;;
+      esac
+
+      shift
+    done
+
+    local _content=
+    _content="$(_show "${_source_path}" --print --no-color)"
+
+    local _form_action_selector=
+    _form_action_selector="$(_get_id_selector "${_source_path}")"
+
+    local _last_saved_at=
+    _last_saved_at="$(_show "${_source_path}" --updated)"
+    _last_saved_at="${_last_saved_at% -[0-9][0-9][0-9][0-9]}"
+
+    local _text_area_columns="${_columns:-}"
+    local _rows=30
+    local _url_params=
+
+    if _contains "--terminal" "${_pagination_arguments[@]:-}"
+    then
+      _url_params+="&--per-page=${_per_page}"
+      _rows="$((_per_page + 2))"
+
+      _url_params+="&--columns=${_columns}"
+      _text_area_columns="$((_text_area_columns - 3))"
+    fi
+
+    {
+      printf "%s\\n" "$(
+        _browse_render_header             \
+          "${_source_path}"               \
+          "${_pagination_arguments[@]:-}" \
+          --edit
+      )"
+
+      # TODO: https://stackoverflow.com/a/15844977
+      cat <<HEREDOC
+<form
+  action="/${_form_action_selector:-}?--edit${_url_params:-}"
+  accept-charset="UTF-8"
+  method="post">
+  <textarea
+    id="content"
+    name="content"
+    rows="${_rows}"
+    cols="${_text_area_columns}">${_content}</textarea>
+  <br><br>
+  <input
+    type="submit"
+    value="save"> <span class="dim">·</span> <span class="dim">last: ${_last_saved_at}</span>
+</form>
+HEREDOC
+    } | {
+      _pandoc --render-to-html || :
+    }
+  }
+
   # _browse_render_header()
   #
   # Usage:
-  #   _browse_render_header <selector> [--per-page <limit>] [--terminal]
+  #   _browse_render_header <selector> [--columns <columns>]
+  #                         [--per-page <limit>] [--terminal]
   #
   # Description:
   #   Print a context-aware, linked Markdown header.
   _browse_render_header() {
+    local _bullet="·"
+    local _editing=0
+    local _per_page="${NB_BROWSE_COLUMNS:-70}"
     local _per_page="${NB_BROWSE_PER_PAGE:-30}"
     local _selector=
     local _terminal_browser=0
@@ -14362,6 +14502,9 @@ HEREDOC
     while ((${#}))
     do
       case "${1:-}" in
+        '')         :                                           ;;
+        --col*)     _columns="${2:?}"                 && shift  ;;
+        --edit)     _editing=1                                  ;;
         --page)     _option_value_is_present "${2:-}" && shift  ;;
         --per*)     _per_page="${2:?}"                && shift  ;;
         --terminal) _terminal_browser=1                         ;;
@@ -14375,12 +14518,12 @@ HEREDOC
 
     if ((_terminal_browser))
     then
-      _url_params+="?--per-page=${_per_page}"
+      _url_params+="?--per-page=${_per_page}&--columns=${_columns}"
     fi
 
     local _header_content="\
 <a href=\"http://localhost:${NB_SERVER_PORT}/${_url_params:-}\"><span class=\"dim\">❯</span>nb</a>"
-    _header_content+=" <span class=\"dim\">·</span>"
+    _header_content+=" <span class=\"dim\">${_bullet}</span>"
 
     if [[ -z "${_selector:-}" ]]
     then
@@ -14474,104 +14617,104 @@ HEREDOC
       fi
     fi
 
+    if [[ -z "${_selector_folders[*]:-}" ]] # TODO: && [[ -n "${_selector:-}" ]]
+    then
+      _header_content+=" <span class=\"dim\">:</span>"
+    fi
+
     local _item_path=
     _item_path="$(_show "${_selector:-}" --path 2>/dev/null || :)"
 
     if [[ -f "${_item_path:-}" ]]
     then
-      if [[ -z "${_selector_folders[*]:-}" ]]
-      then
-        _header_content+=" <span class=\"dim\">:</span>"
-      fi
+      local _id_selector=
+      _id_selector="$(_get_id_selector "${_selector:-}" --notebook)"
 
-      _header_content+=" <span class=\"dim\">$(_show "${_selector:-}" --id)</span>"
+      local _selector_id="${_id_selector#*:}"
+      _selector_id="${_selector_id##*/}"
+
+      if ((_editing))
+      then
+          _header_content+="\
+ <a href=\"http://localhost:${NB_SERVER_PORT}/${_id_selector:-}${_url_params:-}\">${_selector_id:-}</a>"
+
+        _header_content+=" <span class=\"dim\">${_bullet}</span>"
+        _header_content+=" <span class=\"dim\">editing</span>"
+
+        # TODO
+#        _header_content+=" <span class=\"dim\">${_bullet}</span>"
+#        _header_content+="\
+# <a href=\"http://localhost:${NB_SERVER_PORT}/${_id_selector:-}${_url_params:-}&--delete\">x</a>"
+#        _header_content+=" <span class=\"dim\">|</span> "
+      else
+        _header_content+=" <span class=\"dim\">${_selector_id:-}</span>"
+
+        if _file_is_text "${_selector:-}"
+        then
+          _header_content+=" <span class=\"dim\">${_bullet}</span>"
+
+          if [[ -z "${_url_params:-}" ]]
+          then
+            _url_params="?--edit"
+          else
+            _url_params+="&--edit"
+          fi
+
+          _header_content+="\
+ <a href=\"http://localhost:${NB_SERVER_PORT}/${_id_selector:-}${_url_params:-}\">edit</a>"
+
+          # TODO
+#          _header_content+=" <span class=\"dim\">${_bullet}</span>"
+#          _header_content+="\
+# <a href=\"http://localhost:${NB_SERVER_PORT}/${_id_selector:-}${_url_params:-'?--n=b'}&--delete\">x</a>"
+#          _header_content+=" <span class=\"dim\">|</span> "
+
+        fi
+      fi
     fi
+      # TODO
+#    if [[ -n "${_selector:-}" ]]
+#    then
+#      _header_content+="\
+# <a href=\"http://localhost:${NB_SERVER_PORT}/${_notebook_name}:${_folder_id_path:-}${_url_params:-'?--n=b'}&--add\">new</a>"
+#    fi
 
     printf "<h1 class=\"header-crumbs\">%s</h1>\\n\\n" "${_header_content:-}"
-  }
-
-  # _browse_render_edit()
-  #
-  # Usage:
-  #   _browse_render_edit <path> [--per-page] [--terminal]
-  #
-  # Description:
-  #   Print an HTML page for editing a text file.
-  _browse_render_edit() {
-    local _header_arguments=()
-    local _pagination_arguments=()
-    local _per_page="${NB_BROWSE_PER_PAGE:-30}"
-    local _source_path=
-
-    while ((${#}))
-    do
-      case "${1:-}" in
-        --page)
-          _option_value_is_present "${2:-}" && shift
-          ;;
-        --per-page)
-          _per_page="${2:?}"
-          _pagination_arguments+=("${1:?}" "${2:?}")
-          _header_arguments+=("${1:?}" "${2:?}")
-          shift
-          ;;
-        --terminal)
-          _pagination_arguments+=("--terminal")
-          _header_arguments+=("--terminal")
-          ;;
-        *)
-          _source_path="${1:-}"
-          _header_arguments+=("${_source_path}")
-          ;;
-      esac
-
-      shift
-    done
-
-    local _url_params=
-
-    if _contains "--terminal" "${_pagination_arguments[@]:-}"
-    then
-      _url_params+="?--per-page=${_per_page}"
-    fi
-
-    {
-      printf "%s\\n" "$(_browse_render_header "${_pagination_arguments[@]:-}")"
-    } | {
-      _pandoc --render-to-html || :
-    }
   }
 
   # _browse_render_item()
   #
   # Usage:
-  #   _browse_render_item <path> [--per-page <limit>] [--terminal]
+  #   _browse_render_item <path> [--columns <columns>] [--per-page <limit>]
+  #                       [--terminal]
   #
   # Description:
   #   Render an item to HTML with links resolved to internal web server.
   _browse_render_item() {
-    local _header_arguments=()
+    local _columns="${NB_BROWSE_COLUMNS:-70}"
     local _pagination_arguments=()
     local _source_path=
 
     while ((${#}))
     do
       case "${1:-}" in
+        --col*)
+          _columns="$(_option_get_value "${1:-}" "${2:-}")"
+          _pagination_arguments+=("${1:-}" "${2:?}")
+          shift
+          ;;
         --page)
           _option_value_is_present "${2:-}" && shift
           ;;
         --per-page)
           _pagination_arguments+=("${1:?}" "${2:?}")
-          _header_arguments+=("${1:?}" "${2:?}")
           shift
           ;;
         --terminal)
           _pagination_arguments+=("--terminal")
-          _header_arguments+=("--terminal")
           ;;
         *)
           _source_path="${1:-}"
-          _header_arguments+=("${_source_path}")
           ;;
       esac
 
@@ -14581,12 +14724,12 @@ HEREDOC
     local _header_temp_path=
     _header_temp_path="$(_temp file ".html" --touch)"
 
-    _browse_render_header "${_header_arguments[@]:-}" \
+    _browse_render_header "${_source_path}" "${_pagination_arguments[@]:-}" \
       | pandoc --from markdown --to html >> "${_header_temp_path}"
 
     local _notebook_path=
     _notebook_path="$(
-      _notebooks show "${_source_path:-}" --path 2>/dev/null ||
+      _notebooks show "${_source_path:-}" --path 2>/dev/null  ||
         _notebooks current --path
     )"
 
@@ -14595,33 +14738,33 @@ HEREDOC
       {
         cat "${_source_path}"
       } | {
-        _resolve_links                                  \
-          "${_notebook_path}"                           \
-          "${_pagination_arguments[@]:-}"               \
-          --browse                                      \
+        _resolve_links                                        \
+          "${_notebook_path}"                                 \
+          "${_pagination_arguments[@]:-}"                     \
+          --browse                                            \
           --type org
       } | {
         # avoid pandoc bug with brackets in Org link descriptions
-        sed -E                                          \
-          -e "s/\]\[\[\[/\]\[••/g"                      \
-          -e "s/\]\]\]\]/••\]\]/g"                      \
-        | _pandoc                                       \
-          --include-before-body="${_header_temp_path}"  \
-          --from org                                    \
-          --render-to-html                              \
-        | sed -E                                        \
-          -e "s/>••/>\[\[/g"                            \
-          -e "s/••</\]\]</g"
+        sed -E                                                \
+            -e "s/\]\[\[\[/\]\[••/g"                          \
+            -e "s/\]\]\]\]/••\]\]/g"                          \
+            | _pandoc                                         \
+                --include-before-body="${_header_temp_path}"  \
+                --from org                                    \
+                --render-to-html                              \
+                | sed -E                                      \
+                      -e "s/>••/>\[\[/g"                      \
+                      -e "s/••</\]\]</g"
       }
     else # render non-Org to HTML before resolving [[wiki-style links]]
       {
-        _pandoc "${_source_path}"                       \
-          --include-before-body="${_header_temp_path}"  \
+        _pandoc "${_source_path}"                             \
+          --include-before-body="${_header_temp_path}"        \
           --render-to-html
       } | {
-        _resolve_links                                  \
-          "${_notebook_path}"                           \
-          "${_pagination_arguments[@]:-}"               \
+        _resolve_links                                        \
+          "${_notebook_path}"                                 \
+          "${_pagination_arguments[@]:-}"                     \
           --browse
       }
     fi
@@ -14632,17 +14775,24 @@ HEREDOC
   # _browse_render_notebooks()
   #
   # Usage:
-  #   _browse_render_notebooks [--per-page] [--terminal]
+  #   _browse_render_notebooks [--columns <columns>] [--per-page <limit>]
+  #                            [--terminal]
   #
   # Description:
   #   Print an HTML page listing notebooks.
   _browse_render_notebooks() {
+    local _columns="${NB_BROWSE_COLUMNS:-70}"
     local _pagination_arguments=()
     local _per_page="${NB_BROWSE_PER_PAGE:-30}"
 
     while ((${#}))
     do
       case "${1:-}" in
+        --col*)
+          _columns="$(_option_get_value "${1:-}" "${2:-}")"
+          _pagination_arguments+=("${1:-}" "${2:?}")
+          shift
+          ;;
         --page)
           _option_value_is_present "${2:-}" && shift
           ;;
@@ -14663,7 +14813,7 @@ HEREDOC
 
     if _contains "--terminal" "${_pagination_arguments[@]:-}"
     then
-      _url_params+="?--per-page=${_per_page}"
+      _url_params+="?--per-page=${_per_page}&--columns=${_columns}"
     fi
 
     local _notebook_names=()
@@ -14760,7 +14910,7 @@ HEREDOC
       # then
       #   _response_headers+=("Content-Length: ${_content_length}")
       # fi
-    elif [[ "${_status_code:-}" == "307" ]]
+    elif _contains "${_status_code:-}" "302" "307"
     then
       _only_headers=1
       _response_headers+=("Location: $(_get_uri --decode "${2:-}")")
@@ -14848,75 +14998,126 @@ HEREDOC
       _browse_respond_with 400
     fi
 
+    # parse headers and message body
+
+    local _content_length=
+
+    case "${_request_method:-}" in
+      POST) local _looking_for_content_length=1 ;;
+      *)    local _looking_for_content_length=0 ;;
+    esac
+
+    local _looking_for_end_of_headers=1
     local _looking_for_user_agent=1
     local _terminal_browser=1
 
-    while ((_looking_for_user_agent))
+    while ((_looking_for_user_agent))     ||
+          ((_looking_for_content_length)) ||
+          ((_looking_for_end_of_headers))
     do
-      local _http_header_line=
-      read -r _http_header_line
+      local   __request_line=
+      read -r __request_line
 
-      # detect browser type
-
-      # turn on case-insensitive matching
-      shopt -s nocasematch
-      if [[ "${_http_header_line}"      =~ User-Agent           ]]
-      then
-
-        if [[ ! "${_http_header_line}"  =~ curl|Links|Lynx|w3m  ]]
+      if ((_looking_for_user_agent))  &&
+         [[ "${__request_line:-}"     =~ User-Agent         ]]
+      then # detect browser type
+        # turn on case-insensitive matching
+        shopt -s nocasematch
+        if [[ ! "${__request_line}" =~ curl|Links|Lynx|w3m  ]]
         then
           _terminal_browser=0
           _looking_for_user_agent=0
         fi
+        # turn off case-insensitive matching
+        shopt -u nocasematch
+      elif ((_looking_for_content_length)) &&
+           [[ "${__request_line:-}"   =~ Content-Length     ]]
+      then # assign content length
+        _content_length="${__request_line##*: }"
+        _content_length="${_content_length%%$'\r'}"
 
+        _looking_for_content_length=0
+      elif [[ -z "${__request_line%%$'\r'}"                 ]]
+      then
+        _looking_for_end_of_headers=0
         break
       fi
-      # turn off case-insensitive matching
-      shopt -u nocasematch
     done
 
-    if [[ "${_request_uri}" =~ \?url=(.*)           ]]
+    # get message body
+
+    local _message_body=
+
+    if [[ "${_request_method}"  == "POST"               ]]
+    then
+      read -r -n "${_content_length}" _message_body
+    fi
+
+    # redirect outbound URLs
+
+    if [[ "${_request_uri}"     =~ \?url=(.*)           ]]
     then
       _browse_respond_with 307 "${BASH_REMATCH[1]}"
     fi
 
     # detect presence of parameters overriding browser type
 
-    if [[ "${_request_uri}" =~ --terminal           ]]
+    if [[ "${_request_uri}"     =~ --terminal           ]]
     then
       _terminal_browser=1
     fi
 
-    if [[ "${_request_uri}" =~ --gui                ]]
+    if [[ "${_request_uri}"     =~ --gui                ]]
     then
       _terminal_browser=0
     fi
 
-    # retrieve pagination and query values from parameters
+    # detect dimensional parameters
+
+    local _columns=1
+    local _render_function_arguments=()
+
+    if [[ "${_request_uri}"     =~ --columns=([0-9]+)   ]]
+    then
+      _columns="${BASH_REMATCH[1]}"
+      _render_function_arguments+=("--columns" "${_columns}")
+    fi
 
     local _page_number=1
 
-    if [[ "${_request_uri}" =~ --page=([0-9]+)      ]]
+    if [[ "${_request_uri}"     =~ --page=([0-9]+)      ]]
     then
       _page_number="${BASH_REMATCH[1]}"
     fi
 
     local _per_page="${NB_BROWSE_PER_PAGE:-30}"
 
-    if [[ "${_request_uri}" =~ --per-page=([0-9]+)  ]]
+    if [[ "${_request_uri}"     =~ --per-page=([0-9]+)  ]]
     then
       _per_page="${BASH_REMATCH[1]}"
+      _render_function_arguments+=("--per-page" "${_per_page}")
     fi
+
+    # retrieve pagination and query values from parameters
 
     local _query=
 
-    if [[ "${_request_uri}" =~ --query=([^&]+)      ]]
+    if [[ "${_request_uri}"     =~ --query=([^&]+)      ]]
     then
       local _hash=$'#'
       _query="${BASH_REMATCH[1]}"
       _query="${_query//%23/${_hash}}"
       _query="${_query//%20/ }"
       _query="${_query//+/ }"
+    fi
+
+    # detect edit
+
+    local _edit=0
+
+    if [[ "${_request_uri}"     =~ --edit               ]]
+    then
+      _edit=1
     fi
 
     # prepare response
@@ -14931,58 +15132,69 @@ HEREDOC
     _target_selector="${_target_selector//"\%20"/ }"
     _target_selector="${_target_selector//"%20"/ }"
 
-    local _arguments=()
-
-    if [[ -n "${_per_page:-}"           ]]
-    then
-      _arguments+=("--per-page" "${_per_page}")
-    fi
+    local _response_url_params=
 
     if ((_terminal_browser))
     then
-      _arguments+=("--terminal")
+      _render_function_arguments+=("--terminal")
+      _response_url_params+="?--per-page=${_per_page}"
     fi
 
-    if [[ -z "${_target_selector:-}"    ]]
+    if [[ -z "${_target_selector:-}"      ]]
     then
-      _browse_render_notebooks "${_arguments[@]:-}" >> "${_temp_file}"
+      _browse_render_notebooks "${_render_function_arguments[@]:-}" >> "${_temp_file}"
     else
       local _selector_path=
       _selector_path="$(_show "${_target_selector%%\?*}" --path 2>/dev/null || :)"
 
-      if [[   -z "${_selector_path:-}"  ]]
+      if [[   -z "${_selector_path:-}"    ]]
       then
         _browse_respond_with 404
       else
-        _arguments+=("${_selector_path}")
+        _render_function_arguments+=("${_selector_path}")
 
-        if [[ -d "${_selector_path:-}"  ]]
+        if [[ -d "${_selector_path:-}"    ]]
         then
-          if [[ -n "${_page_number:-}"  ]]
+          if [[ -n "${_page_number:-}"    ]]
           then
-            _arguments+=("--page" "${_page_number}")
+            _render_function_arguments+=("--page" "${_page_number}")
           fi
 
-          if [[ -n "${_per_page:-}"     ]] &&
-             ! _contains "--per-page" "${_arguments[@]:-}"
+          if [[ -n "${_per_page:-}"       ]]  &&
+             ! _contains "--per-page" "${_render_function_arguments[@]:-}"
           then
-            _arguments+=("--per-page" "${_per_page}")
+            _render_function_arguments+=("--per-page" "${_per_page}")
           fi
 
-          if [[ -n "${_query:-}"        ]]
+          if [[ -n "${_query:-}"          ]]
           then
-            _arguments+=("--query" "${_query}")
+            _render_function_arguments+=("--query" "${_query}")
           fi
 
-          _browse_render_container  "${_arguments[@]:-}"  >> "${_temp_file}"
+          _browse_render_container                      \
+            "${_render_function_arguments[@]:-}"        >> "${_temp_file}"
         else
-          if _file_is_text "${_selector_path:-}" ||
-             [[ "${_selector_path:-}" =~ \.docx$|\.epub$|\.odt$ ]]
+          if _file_is_text "${_selector_path:-}"                    ||
+             [[ "${_selector_path:-}"     =~ \.docx$|\.epub$|\.odt$ ]]
           then
-            _browse_render_item   "${_arguments[@]:-}"    >> "${_temp_file}"
+            if ((_edit))
+            then
+              if [[ "${_request_method}"  == "POST"                 ]]
+              then
+                _browse_update_item                     \
+                  "${_render_function_arguments[@]:-}"  \
+                  --message-body "${_message_body:-}"
+              fi
+
+              _browse_render_edit     \
+                "${_render_function_arguments[@]:-}"    >> "${_temp_file}"
+            else
+              _browse_render_item     \
+                "${_render_function_arguments[@]:-}"    >> "${_temp_file}"
+            fi
           elif _file_is_encrypted "${_selector_path:-}"
           then
-            _browse_respond_with 415    \
+            _browse_respond_with 415  \
               "415 $(_browse_http_response_message 415): File is encrypted."
           else
             _browse_respond_with 415
@@ -14992,11 +15204,17 @@ HEREDOC
     fi
 
     case "${_request_method}" in
+      GET)
+        _browse_respond_with 200 "${_temp_file}"
+        ;;
       HEAD)
         _browse_respond_with 200 "${_temp_file}" --headers
         ;;
-      GET)
+      POST)
         _browse_respond_with 200 "${_temp_file}"
+        # TODO
+        # _browse_respond_with 302 \
+        #   "http://localhost:${NB_SERVER_PORT}/${_target_selector//' '/%20}${_response_url_params:-}"
         ;;
       *)
         _browse_respond_with 405
@@ -15018,13 +15236,19 @@ HEREDOC
   _browse_serve() {
     # Usage: _browse_serve_run
     _browse_serve_run() {
+      local _tool="ncat"
+
       while true
       do
-        ncat                                    \
-          --exec "${_MY_PATH} browse --respond" \
-          --listen                              \
-          --source-port "${NB_SERVER_PORT}"     \
-          2>/dev/null
+        case "${_tool:-}" in
+          ncat)
+            ncat                                    \
+              --exec "${_MY_PATH} browse --respond" \
+              --listen                              \
+              --source-port "${NB_SERVER_PORT}"     \
+              2>/dev/null
+            ;;
+        esac
       done
     }
 
@@ -15037,8 +15261,70 @@ HEREDOC
     sleep 0.05
   }
 
+  # _browse_update_item()
+  #
+  # Usage:
+  #   _browse_update_item <path> --message-body <message-body>
+  #
+  # Description:
+  #   Update the content of item at <path>.
+  _browse_update_item() {
+    local _message_body=
+    local _source_path=
+
+    while ((${#}))
+    do
+      case "${1:-}" in
+        --col*|--page|--per*page)
+          _option_value_is_present "${2:-}" && shift
+          ;;
+        --message*body)
+          _message_body="$(_option_get_value "${1:-}" "${2:-}")"
+          shift
+          ;;
+        --terminal)
+          :
+          ;;
+        *)
+          _source_path="${1:-}"
+          _header_arguments+=("${_source_path}")
+          ;;
+      esac
+
+      shift
+    done
+
+    [[ -z "${_source_path:-}" ]] && _browse_respond_with 404
+
+    local _notebook_path=
+    _notebook_path="$(
+      _notebooks show "${_source_path:-}" --path 2>/dev/null ||
+        _notebooks current --path
+    )"
+
+    local _updated_content=
+
+    if [[ "${_message_body:-}" =~ ^content= ]]
+    then
+      # https://stackoverflow.com/a/37840948
+      local _decoding_body="${_message_body//+/ }"
+      _decoding_body="$(echo -e "${_decoding_body//%/\\x}")"
+
+      _updated_content="${_decoding_body#content=}"
+      _updated_content="${_updated_content%$'\r'}"
+      _updated_content="${_updated_content%$'\n'}"
+
+      printf "%s\\n" "${_updated_content:-}" > "${_source_path}"
+
+      _git checkpoint "${_notebook_path}" \
+        "[nb] Edit: ${_source_path#${_notebook_path}/}"
+    fi
+  }
+
+  local _browse_columns="${_COLUMNS}"
   local _browse_notebooks=0
   local _browse_per_page=
+  local _edit=0
   local _force_terminal_request=0
   local _only_serve=0
   local _open_gui=0
@@ -15047,6 +15333,7 @@ HEREDOC
   local _print_browse_item=0
   local _print_headers=0
   local _print_output=0
+  local _print_render_edit=0
   local _search_query=
   local _selector=
   local _target_page=
@@ -15054,19 +15341,26 @@ HEREDOC
   while ((${#}))
   do
     case "${1:-}" in
-      --container)
+      --col*)
+        _browse_columns="$(_option_get_value "${1:-}" "${2:-}")"
+        shift
+        ;;
+      --*container)
         _print_browse_container=1
+        ;;
+      -e|--edit)
+        _edit=1
         ;;
       -g|--gui)
         _open_gui=1
         ;;
-      --header)
+      --*header)
         _print_browse_header=1
         ;;
       --headers)
         _print_headers=1
         ;;
-      --item)
+      --*item)
         _print_browse_item=1
         ;;
       --notebooks)
@@ -15082,6 +15376,9 @@ HEREDOC
         ;;
       -p|--print)
         _print_output=1
+        ;;
+      --render*edit)
+        _print_render_edit=1
         ;;
       --respond)
         _browse_respond
@@ -15128,13 +15425,20 @@ HEREDOC
     exit 0
   fi
 
-  local _request_url_base="http://localhost:${NB_SERVER_PORT}/"
-  local _request_url="http://localhost:${NB_SERVER_PORT}/${_selector:-}"
+  # build initial request URL parameters and arguments
+
+  local _url_params=()
 
   if [[ -n "${_search_query:-}" ]]
   then
     _arguments+=("--query" "${_search_query}")
-    _request_url+="?--query=${_search_query//#/%23}"
+    _url_params+=("--query=${_search_query//#/%23}")
+  fi
+
+  if ((_edit))
+  then
+    _arguments+=("--edit")
+    _url_params+=("--edit")
   fi
 
   # configure pagination
@@ -15159,27 +15463,39 @@ HEREDOC
       fi
     fi
 
-    if [[ -n "${_browse_per_page:-}" ]]
+    if [[ -n "${_browse_per_page:-}"  ]]
     then
-      _arguments+=( "--per-page" "${_browse_per_page}")
+      _arguments+=("--per-page" "${_browse_per_page}")
       _arguments+=("--terminal")
 
-      if [[ "${_request_url:-}" =~ \?--query= ]]
-      then
-        _request_url+="&"
-      else
-        _request_url+="?"
-      fi
-
-      _request_url+="--per-page=${_browse_per_page}&--terminal"
+      _url_params+=("--per-page=${_browse_per_page}")
+      _url_params+=("--terminal")
     fi
 
-    if [[ -n "${_target_page:-}" ]]
+    if [[ -n "${_browse_columns:-}"   ]]
     then
-      _argument+=("--page" "${_target_page:-}")
-      _request_url+="&--page=${_target_page}"
+      _arguments+=("--columns" "${_browse_columns}")
+      _url_params+=("--columns=${_browse_columns}")
+    fi
+
+    if [[ -n "${_target_page:-}"      ]]
+    then
+      _arguments+=("--page" "${_target_page:-}")
+      _url_params+=("--page=${_target_page}")
     fi
   fi
+
+  # build initial request URL
+
+  local _request_url_base="http://localhost:${NB_SERVER_PORT}"
+  local _request_url="${_request_url_base}/${_selector:-}"
+
+  if ((${#_url_params[@]}))
+  then
+    _request_url+="?$(_join "&" "${_url_params[@]}")"
+  fi
+
+  # call functions directly
 
   if ((_print_browse_header))
   then
@@ -15197,6 +15513,13 @@ HEREDOC
   if ((_print_browse_item))
   then
     _browse_render_item "${_arguments[@]:-}"
+
+    exit 0
+  fi
+
+  if ((_print_render_edit))
+  then
+    _browse_render_edit "${_arguments[@]:-}"
 
     exit 0
   fi
