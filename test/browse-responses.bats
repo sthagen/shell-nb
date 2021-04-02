@@ -4,9 +4,9 @@ load test_helper
 
 export NB_SERVER_PORT=6789
 
-# 307 #########################################################################
+# 302 #########################################################################
 
-@test "'browse' with 'url=<url>' param responds with 307 redirect." {
+@test "'browse' with 'url=<url>' param responds with 302 redirect." {
   {
     "${_NB}" init
 
@@ -28,14 +28,14 @@ export NB_SERVER_PORT=6789
   printf "\${status}: '%s'\\n" "${status}"
   printf "\${output}: '%s'\\n" "${output}"
 
-  [[ "${status}"    ==  0                                   ]]
-  [[ "${#lines[@]}" ==  5                                   ]]
+  [[ "${status}"    ==  0                               ]]
+  [[ "${#lines[@]}" ==  5                               ]]
 
-  [[ "${lines[0]}"  =~  HTTP/1.0\ 307\ Temporary\ Redirect  ]]
-  [[ "${lines[1]}"  =~  Date:\ .*                           ]]
-  [[ "${lines[2]}"  =~  Expires:\ .*                        ]]
-  [[ "${lines[3]}"  =~  Server:\ nb                         ]]
-  [[ "${lines[4]}"  =~  Location:\ http://example.test      ]]
+  [[ "${lines[0]}"  =~  HTTP/1.0\ 302\ Found            ]]
+  [[ "${lines[1]}"  =~  Date:\ .*                       ]]
+  [[ "${lines[2]}"  =~  Expires:\ .*                    ]]
+  [[ "${lines[3]}"  =~  Server:\ nb                     ]]
+  [[ "${lines[4]}"  =~  Location:\ http://example.test  ]]
 }
 
 # 404 #########################################################################
@@ -43,6 +43,8 @@ export NB_SERVER_PORT=6789
 @test "'browse' renders 404 when not found." {
   {
     "${_NB}" init
+
+    sleep 1
   }
 
   run "${_NB}" browse no-matching-selector --print
@@ -64,6 +66,8 @@ export NB_SERVER_PORT=6789
     "${_NB}" init
 
     "${_NB}" import "${NB_TEST_BASE_PATH}/fixtures/example.pdf"
+
+    sleep 1
   }
 
   run "${_NB}" browse 1 --print
@@ -87,6 +91,8 @@ export NB_SERVER_PORT=6789
       --content "Example content."                \
       --encrypt                                   \
       --password password
+
+    sleep 1
   }
 
   run "${_NB}" browse 1 --print
@@ -109,6 +115,8 @@ export NB_SERVER_PORT=6789
       --content "Example content."                \
       --encrypt                                   \
       --password password
+
+    sleep 1
   }
 
   run "${_NB}" browse 1/1 --print

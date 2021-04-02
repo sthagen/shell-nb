@@ -7,11 +7,78 @@ export NB_SERVER_PORT=6789
 # non-breaking space
 export _S=" "
 
+# --original ##################################################################
+
+@test "GET to --original URL serves file with no newlines." {
+  {
+    "${_NB}" init
+
+    "${_NB}" add  "Example Folder/Example File.md"  \
+      --title     "Example Title"
+
+    printf "# Example Title" > "${NB_DIR}/home/Example Folder/Example File.md"
+
+    "${_NB}" git checkpoint
+
+    (ncat                               \
+      --exec "${_NB} browse --respond"  \
+      --listen                          \
+      --source-port "6789"              \
+      2>/dev/null) &
+
+    sleep 1
+  }
+
+  run curl -sS --verbose -D - \
+    "http://localhost:6789/--original/home/Example%20Folder/Example%20File.md"
+
+  printf "\${status}: '%s'\\n" "${status}"
+  printf "\${output}: '%s'\\n" "${output}"
+
+  [[ "${status}"  -eq 0                         ]]
+
+  [[ "${output}"  =~  Content-Type:\ text/plain ]]
+
+  [[ "${output}"  =~  \#\ Example\ Title        ]]
+}
+
+@test "GET to --original URL serves original markdown file." {
+  {
+    "${_NB}" init
+
+    "${_NB}" add  "Example Folder/Example File.md"  \
+      --title       "Example Title"                 \
+      --content     "Example content."
+
+    (ncat                               \
+      --exec "${_NB} browse --respond"  \
+      --listen                          \
+      --source-port "6789"              \
+      2>/dev/null) &
+
+    sleep 1
+  }
+
+  run curl -sS -D - "http://localhost:6789/--original/home/Example%20Folder/Example%20File.md"
+
+  printf "\${status}: '%s'\\n" "${status}"
+  printf "\${output}: '%s'\\n" "${output}"
+
+  [[ "${status}"  -eq 0                         ]]
+
+  [[ "${output}"  =~  Content-Type:\ text/plain ]]
+
+  [[ "${output}"  =~  \#\ Example\ Title        ]]
+  [[ "${output}"  =~  Example\ content.         ]]
+}
+
 # title #######################################################################
 
 @test "'browse' sets HTML title." {
   {
     "${_NB}" init
+
+    sleep 1
   }
 
   run "${_NB}" browse --print
@@ -31,6 +98,8 @@ export _S=" "
 @test "'browse' includes application styles." {
   {
     "${_NB}" init
+
+    sleep 1
   }
 
   run "${_NB}" browse --print
@@ -56,6 +125,8 @@ export _S=" "
 
     [[ -d "${NB_DIR}/home/Example Folder" ]]
     [[ -f "${NB_DIR}/home/1/File One.md"  ]]
+
+    sleep 1
   }
 
   run "${_NB}" browse 1/ --print
@@ -66,13 +137,13 @@ export _S=" "
   [[ "${status}"  ==  0 ]]
 
   [[ "${output}"  =~  \
-href=\"http://localhost:6789/\?--per-page=.*\"\>\<span\ class=\"dim\"\>❯\</span\>nb\</a\>         ]]
+href=\"http://localhost:6789/\?--per-page=.*\"\>\<span\ class=\"dim\"\>❯\</span\>nb\</a\>             ]]
   [[ "${output}"  =~  \
-\<h1\ class=\"header-crumbs\"\ id=\"nb-home-example-folder\"\>.*\<a.*\ href=\"http://localhost:6789/\?--per-page=.*\"\> ]]
+\<nav\ class=\"header-crumbs\"\>\<h1\>.*\<a.*\ href=\"http://localhost:6789/\?--per-page=.*\"\>       ]]
   [[ "${output}"  =~  \
-.*·.*\ \<a.*\ href=\"http://localhost:6789/home:\?--per-page=.*\"\>home\</a\>\ .*:.*\             ]]
+.*·.*\ \<a.*\ href=\"http://localhost:6789/home:\?--per-page=.*\"\>home\</a\>\ .*:.*\                 ]]
   [[ "${output}"  =~  \
-\<a.*\ href=\"http://localhost:6789/home:1/\?--per-page=.*\"\>Example\ Folder\</a\>\ .*/.*\</h1\> ]]
+\<a.*\ href=\"http://localhost:6789/home:1/\?--per-page=.*\"\>Example\ Folder\</a\>\ .*/.*\</h1\>     ]]
 
   [[ "${output}"  =~  0\ items. ]]
 
@@ -84,7 +155,7 @@ href=\"http://localhost:6789/\?--per-page=.*\"\>\<span\ class=\"dim\"\>❯\</spa
   [[ "${status}"  ==  0 ]]
 
   [[ "${output}"  =~  \
-\<h1\ class=\"header-crumbs\"\ id=\"nb-home-1\"\>\<a.*\ href=\"http://localhost:6789/\?--per-page=.*\"\>\<span\   ]]
+\<nav\ class=\"header-crumbs\"\>\<h1\>\<a.*\ href=\"http://localhost:6789/\?--per-page=.*\"\>\<span\  ]]
   [[ "${output}"  =~  \
 \<span\ class=\"dim\"\>❯\</span\>nb\</a\>                               ]]
   [[ "${output}"  =~  \
@@ -93,9 +164,9 @@ href=\"http://localhost:6789/\?--per-page=.*\"\>\<span\ class=\"dim\"\>❯\</spa
 \<a.*\ href=\"http://localhost:6789/home:2/\?--per-page=.*\"\>1\</a\>\ .*/.*\</h1\>     ]]
 
   [[ "${output}"  =~  \
-\<p\>\<a.*\ href=\"http://localhost:6789/home:2/1\?--per-page=.*\"\ class=\"list-item\"\>.*\[.*1/1.*\].*  ]]
+\<a.*\ href=\"http://localhost:6789/home:2/1\?--per-page=.*\"\ class=\"list-item\"\>.*\[.*1/1.*\].*   ]]
   [[ "${output}"  =~  \
-class=\"list-item\"\>.*\[.*1/1.*\].*${_S}File${_S}One.md\</a\>\<br\ /\> ]]
+class=\"list-item\"\>.*\[.*1/1.*\].*${_S}File${_S}One.md\</a\>\<br\>    ]]
 }
 
 # headers #######################################################################
@@ -107,6 +178,8 @@ class=\"list-item\"\>.*\[.*1/1.*\].*${_S}File${_S}One.md\</a\>\<br\ /\> ]]
     "${_NB}" add  "Example File.md"             \
       --title     "Example Title"               \
       --content   "Example content."
+
+    sleep 1
   }
 
   run "${_NB}" browse 1 --print --headers
